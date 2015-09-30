@@ -1,0 +1,7 @@
+---
+# defaults file for docker
+#docker_opts: 
+#    - '--dns 8.8.8.8'
+#    - '-H tcp://0.0.0.0:2375'
+docker_users:
+    - 'hussein'
