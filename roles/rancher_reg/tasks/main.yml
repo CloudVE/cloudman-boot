@@ -4,11 +4,18 @@
       name=python-httplib2
       update_cache=yes
 
+- name: Get the default project id
+  action: uri
+      method=GET
+      status_code=200
+      url="http://{{ rancher_server }}:{{ rancher_port }}/v1/projects" return_content=yes
+  register: project_id
+
 - name: Return the registration token URL of Rancher server
   action: uri 
       method=POST
       status_code=201
-      url="http://{{ rancher_server }}:{{ rancher_port }}/v1/registrationtokens?projectId=1a5" return_content=yes
+      url="http://{{ rancher_server }}:{{ rancher_port }}/v1/registrationtokens?projectId={{ project_id.json['data'][0]['id'] }}" return_content=yes
   register: rancher_token_url
 
 - name: Return the registration URL of Rancher server
