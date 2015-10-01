@@ -1,12 +1,12 @@
 [Rancher]
-rancher ansible_ssh_port=22 ansible_ssh_host=104.236.38.159
+rancher ansible_ssh_port=22 ansible_ssh_host=x.x.x.x
 
 [nodes:children]
 application
 database
 
 [application]
-node1 ansible_ssh_port=22 ansible_ssh_host=104.236.77.232
+node1 ansible_ssh_port=22 ansible_ssh_host=y.y.y.y
 
 [database]
-node2 ansible_ssh_port=22 ansible_ssh_host=45.55.137.34
+node2 ansible_ssh_port=22 ansible_ssh_host=z.z.z.z
