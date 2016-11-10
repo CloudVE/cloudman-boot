@@ -1,0 +1,29 @@
+---
+- name: Create HAproxy Configuration Directory
+  file:
+    path=/opt/haproxy
+    state=directory
+    mode=0755
+
+- name: Add HAproxy Configuration
+  template:
+        src=haproxy.cfg.j2
+        dest=/opt/haproxy/haproxy.cfg
+  notify: Restart HAProxy Container
+
+- name: Copy the ssl certificates directory
+  copy:
+    src=ssl/
+    dest=/opt/haproxy/ssl
+    mode=0755
+
+- name: Pull and run HAproxy contianer
+  docker_container:
+      name: "haproxy"
+      image: haproxy:1.5
+      network_mode: host
+      privileged: yes
+      restart_policy: always
+      volumes:
+        - /opt/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+        - /opt/haproxy/ssl:/usr/local/etc/haproxy/ssl

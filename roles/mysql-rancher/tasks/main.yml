@@ -1,0 +1,15 @@
+---
+
+- name: Pull and run MySQL docker container
+  docker_container:
+      name: mysql
+      image: mysql:{{ mysql_version }}
+      detach: True
+      ports:
+        - 3306:3306
+      volumes:
+        - /var/lib/mysql:/var/lib/mysql
+      env: MYSQL_ROOT_PASSWORD={{ mysql_root_password }},
+           MYSQL_DATABASE={{ mysql_rancher_database }}
+           MYSQL_USER={{ mysql_rancher_user }}
+           MYSQL_PASSWORD={{ mysql_rancher_password }}

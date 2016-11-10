@@ -1,0 +1,19 @@
+mkdir -p /var/lib/rancher/etc/server
+export CATTLE_HA_CLUSTER_SIZE={{ ha_cluster_size }}
+export CATTLE_HA_HOST_REGISTRATION_URL={{ registration_url }}
+export CATTLE_HA_CONTAINER_PREFIX=rancher-ha-
+export CATTLE_DB_CATTLE_MYSQL_HOST={{ hostvars['ha-db']['ansible_ssh_host'] }}
+export CATTLE_DB_CATTLE_MYSQL_PORT=3306
+export CATTLE_DB_CATTLE_MYSQL_NAME="{{ mysql_rancher_database }}"
+export CATTLE_DB_CATTLE_USERNAME="{{ mysql_rancher_user }}"
+export CATTLE_DB_CATTLE_PASSWORD="{{ mysql_rancher_password }}"
+export CATTLE_HA_PORT_REDIS=6379
+export CATTLE_HA_PORT_SWARM=2376
+export CATTLE_HA_PORT_HTTP=80
+export CATTLE_HA_PORT_HTTPS=443
+export CATTLE_HA_PORT_PP_HTTP=81
+export CATTLE_HA_PORT_PP_HTTPS=444
+export CATTLE_HA_PORT_ZK_CLIENT=2181
+export CATTLE_HA_PORT_ZK_QUORUM=2888
+export CATTLE_HA_PORT_ZK_LEADER=3888
+export CATTLE_HA_ENABLED=true

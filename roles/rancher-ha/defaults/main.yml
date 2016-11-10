@@ -1,0 +1,6 @@
+---
+# defaults file for rancher
+rancher_version: latest
+ha_cluster_size: 3
+registration_url: https://ha-rancher-setup.com
+encryption_key: CryptoKey

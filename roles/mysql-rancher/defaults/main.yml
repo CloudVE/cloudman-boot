@@ -1,0 +1,5 @@
+mysql_version: 5.6
+mysql_root_password: rootpwd
+mysql_rancher_user: cattle
+mysql_rancher_database: cattle
+mysql_rancher_password: cattle

@@ -1,5 +1,0 @@
----
-mysql_version: 5.5
-mysql_root_password: "{{ lookup('password', mysql_passwd_tmpfile + ' length=20 chars=ascii_letters,digits') }}"
-mysql_passwd_tmpfile: /tmp/mysqlpasswd.file
-mysql_port: 3306

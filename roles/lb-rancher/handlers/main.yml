@@ -1,0 +1,4 @@
+---
+
+- name: Restart HAProxy Container
+  command: docker restart haproxy

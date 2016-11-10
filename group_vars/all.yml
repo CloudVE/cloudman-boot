@@ -1,3 +1,17 @@
 ---
+# MySQL
+mysql_version: 5.6
+mysql_port: 3306
+mysql_root_password: rootpwd
+mysql_rancher_user: cattle
+mysql_rancher_database: cattle
+mysql_rancher_password: cattle
 
-rancher_port: 8080
+# LB
+lb_server_name: rancher-ha-setup.com
+
+# Rancher-HA
+rancher_version: latest
+ha_cluster_size: 3
+registration_url: https://rancher-ha-setup.com
+encryption_key:

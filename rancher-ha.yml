@@ -1,0 +1,25 @@
+---
+
+- name: Installing Docker on all machines
+  hosts: all
+  become: yes
+  roles:
+    - { role: docker, tags: ["docker"] }
+
+- name: Setting up Load Balancer
+  hosts: "Rancher-LB"
+  become: yes
+  roles:
+    - { role: lb-rancher, tags: ["lb-rancher"] }
+
+- name: Setting Up Backend database
+  hosts: Database
+  become: yes
+  roles:
+    - { role: mysql-rancher, tags: ["mysql-rancher"] }
+
+- name: Setting up Rancher HA nodes
+  hosts: "HA-Nodes"
+  become: yes
+  roles:
+    - { role: rancher-ha, tags: ["rancher-ha"] }

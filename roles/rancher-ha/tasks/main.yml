@@ -1,0 +1,30 @@
+---
+- name: Create Rancher etc directory
+  file: path={{ item }} state=directory mode=0755
+  with_items:
+    - /var/lib/rancher/etc/
+    - /var/lib/rancher/etc/ssl/
+    - /var/lib/rancher/etc/server/
+
+- name: Create Rancher etc files
+  template: src={{ item.src }} dest={{ item.dest }}
+  with_items:
+    - { src: server.conf.j2, dest: /var/lib/rancher/etc/server.conf}
+
+- name: Add encryption key
+  template:
+    src=encryption.key.j2
+    dest=/var/lib/rancher/etc/server/encryption.key
+  when: "{{ encryption_key != None }}"
+
+- name: Pull and run the Rancher/server contianer
+  docker_container:
+      name: "rancher-server"
+      image: rancher/server:{{ rancher_version }}
+      command: ha
+      network_mode: host
+      privileged: yes
+      restart_policy: always
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+        - /var/lib/rancher/etc:/var/lib/rancher/etc
