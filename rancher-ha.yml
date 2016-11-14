@@ -23,3 +23,9 @@
   become: yes
   roles:
     - { role: rancher-ha, tags: ["rancher-ha"] }
+
+- name: Inject HA SQL
+  hosts: Database
+  become: yes
+  roles:
+    - { role: sql-ha, tags: ["sql-ha"] }

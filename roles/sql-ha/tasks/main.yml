@@ -1,0 +1,25 @@
+- name: Install mysqldb python module
+  apt:
+    name={{ item }}
+    update_cache=yes
+  with_items:
+    - mysql-client
+    - python2.7-mysqldb
+
+- name: Export SQL file to the server
+  template:
+    src=ha_injection.sql.j2
+    dest=/tmp/ha_injection.sql
+
+- name: Wait for few minutes until the database is ready
+  pause:
+    minutes=3
+
+- name: Import the SQL file
+  mysql_db:
+    state=import
+    name={{ mysql_rancher_database }}
+    target=/tmp/ha_injection.sql
+    login_user={{ mysql_rancher_user }}
+    login_password={{ mysql_rancher_password }}
+    login_host={{ hostvars['ha-db']['ansible_ssh_host'] }}

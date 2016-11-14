@@ -19,7 +19,7 @@
 
 - name: Pull and run the Rancher/server contianer
   docker_container:
-      name: "rancher-server"
+      name: "rancher-ha"
       image: rancher/server:{{ rancher_version }}
       command: ha
       network_mode: host

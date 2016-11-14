@@ -1,0 +1,1 @@
+INSERT INTO {{ mysql_rancher_database }}.setting VALUES (null,'ha.cluster.size','{{ groups['HA-Nodes'] | length}}'),(null,'ha.enabled','true');
