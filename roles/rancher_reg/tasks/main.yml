@@ -40,6 +40,3 @@
       command: "{{ rancher_token.json['registrationUrl'] }}"
       state: started
   when: "{{ 'rancher-agent' not in containers.stdout }}"
-
-- name: Wait for the Rancher agent to start
-  wait_for: timeout=60
