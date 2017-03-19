@@ -30,11 +30,13 @@
 
 - name: Register the Host machine with the Rancher server
   docker_container:
-      name: ragent
-      image: rancher/agent:v{{ rancher_agent_version }}
+      name: "{{ rancher_agent_name }}"
+      image: "{{ rancher_token.json['image'] }}"
       privileged: yes
       detach: True
-      volumes: /var/run/docker.sock:/var/run/docker.sock
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+        - /var/lib/rancher:/var/lib/rancher
       command: "{{ rancher_token.json['registrationUrl'] }}"
       state: started
   when: "{{ 'rancher-agent' not in containers.stdout }}"
