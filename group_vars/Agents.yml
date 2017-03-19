@@ -1,0 +1,2 @@
+---
+rancher_server: "{{ hostvars['rancher']['ansible_ssh_host'] }}"
