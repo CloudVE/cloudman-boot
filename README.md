@@ -150,5 +150,5 @@ agent2 ansible_ssh_port=22 ansible_ssh_host=z.z.z.z
 - Run the ansible-playbook command to setup the environment:
 
 ```
-# ansible-playbook -u user -i providers/other/hosts rancher.yml
+# ansible-playbook -u user -i providers/other/inventory/hosts rancher.yml
 ```
