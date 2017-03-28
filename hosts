@@ -1,6 +1,0 @@
-[Rancher]
-rancher ansible_ssh_port=22 ansible_ssh_host=x.x.x.x
-
-[Agents]
-agent1 ansible_ssh_port=22 ansible_ssh_host=y.y.y.y
-agent2 ansible_ssh_port=22 ansible_ssh_host=z.z.z.z

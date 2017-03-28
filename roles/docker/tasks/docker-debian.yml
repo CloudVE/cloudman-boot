@@ -1,5 +1,15 @@
 ---
 
+- name: apt-get update
+  raw: apt-get update -qq
+
+- name: Install python 2.7
+  raw: apt-get install -yqq python
+
+- name: set python to python2.7
+  set_fact:
+    ansible_python_interpreter: /usr/bin/python
+
 - name: Install python apt
   command: "apt-get install -y python-apt"
 
