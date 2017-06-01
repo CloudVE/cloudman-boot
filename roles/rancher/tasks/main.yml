@@ -14,5 +14,11 @@
   retries: 30
   delay: 10
 
+- name: Download kubectl script
+  get_url:
+    url: https://storage.googleapis.com/kubernetes-release/release/v1.5.4/bin/linux/amd64/kubectl
+    dest: /usr/local/bin
+    mode: 0755
+
 - name: Print Rancher's URL
   debug: msg="You can connect to rancher server http://{{ ansible_ssh_host }}:{{ rancher_port }}"
