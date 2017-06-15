@@ -1,6 +1,10 @@
 ---
 - name: apt-get update
   raw: apt-get update -qq
+  register: task_result
+  until: task_result.rc == 0
+  retries: 10
+  delay: 10
   ignore_errors: yes
 
 - name: Install python 2.7
