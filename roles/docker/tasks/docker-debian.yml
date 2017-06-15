@@ -1,17 +1,20 @@
 ---
-
 - name: apt-get update
   raw: apt-get update -qq
+  ignore_errors: yes
 
 - name: Install python 2.7
   raw: apt-get install -yqq python
+  ignore_errors: yes
 
 - name: set python to python2.7
   set_fact:
     ansible_python_interpreter: /usr/bin/python
+  ignore_errors: yes
 
 - name: Install python apt
   command: "apt-get install -y python-apt"
+  ignore_errors: yes
 
 - name: Install dependencies
   apt:
@@ -19,20 +22,24 @@
       update_cache=yes
       state=present
   with_items: "{{ __docker_pre_packages }}"
+  ignore_errors: yes
 
 - name: Install pip
   easy_install:
       name=pip
+  ignore_errors: yes
 
 - name: Install docker-py
   pip:
     name=docker-py
     state=present
+  ignore_errors: yes
 
 # use shell module to be compatible with older OS versions
 - name: Add docker apt repo key
   shell: "curl -fsSL {{ __docker_repo_key.url }} | sudo apt-key add -"
   when: __docker_package == "docker-ce"
+  ignore_errors: yes
 
 - name: Add docker apt repo key for older versions
   apt_key:
@@ -40,13 +47,16 @@
       state=present
       id={{ __docker_repo_key.id }}
   when:  __docker_package == "docker-engine"
+  ignore_errors: yes
 
 - name: Add docker apt repo
   apt_repository:
     repo='{{ __docker_repo_url }}'
     state=present
+  ignore_errors: yes
 
 - name: Install Docker package
   apt:
     name="{{ __docker_package }}={{ __docker_version }}"
     update_cache=yes
+  ignore_errors: yes
