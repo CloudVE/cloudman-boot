@@ -20,5 +20,27 @@
     dest: /usr/local/bin
     mode: 0755
 
+- name: Fetch rancher CLI
+  unarchive:
+    src: https://github.com/rancher/cli/releases/download/v0.6.1/rancher-linux-amd64-v0.6.1.tar.gz
+    dest: /tmp
+    remote_src: True
+
+- name: Place rancher CLI
+  copy:
+    src: /tmp/rancher-v0.6.1/rancher
+    dest: /usr/local/bin
+    mode: 0755
+    remote_src: True
+
+- name: Check if env already exists
+  shell: rancher --url http://localhost:8080 env | grep CMk8s
+  register: env
+  failed_when: "env.rc == 2"
+
+- name: Add a env
+  shell: rancher --url http://localhost:8080 env create -t kubernetes CMk8s
+  when: "env.rc == 1"
+
 - name: Print Rancher's URL
   debug: msg="You can connect to rancher server http://{{ ansible_ssh_host }}:{{ rancher_port }}"
