@@ -3,7 +3,7 @@
   package:
     name=python-httplib2
 
-- name: Get the default project id
+- name: Get the new K8S env project id
   shell: rancher --url http://localhost:{{ rancher_port }} env | grep {{ k8s_project_name }} | cut -f1 -d' '
   register: project_id
 
@@ -26,9 +26,7 @@
   command: docker ps -a
   register: containers
 
-- debug: var=containers
-
-- name: Register the Host machine with the Rancher server
+- name: Register Rancher server as a host
   docker_container:
       name: "{{ rancher_name }}Host"
       image: "{{ rancher_token.json['image'] }}"
