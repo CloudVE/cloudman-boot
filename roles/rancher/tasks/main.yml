@@ -34,12 +34,12 @@
     remote_src: True
 
 - name: Check if env already exists so don't add it again
-  shell: rancher --url http://localhost:{{ rancher_port }} env | grep CMk8s
+  shell: rancher --url http://localhost:{{ rancher_port }} env | grep {{ k8s_project_name }}
   register: env
   failed_when: "env.rc == 2"
 
 - name: Add a env
-  shell: rancher --url http://localhost:{{ rancher_port }} env create -t kubernetes CMk8s
+  shell: rancher --url http://localhost:{{ rancher_port }} env create -t kubernetes {{ k8s_project_name }}
   when: "env.rc == 1"
 
 - name: Print Rancher's URL
