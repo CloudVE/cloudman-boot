@@ -42,5 +42,8 @@
   shell: rancher --url http://localhost:{{ rancher_port }} env create -t kubernetes {{ k8s_project_name }}
   when: "env.rc == 1"
 
+- include: server_as_host.yml
+  when: server_as_host
+
 - name: Print Rancher's URL
   debug: msg="You can connect to rancher server http://{{ ansible_ssh_host }}:{{ rancher_port }}"
