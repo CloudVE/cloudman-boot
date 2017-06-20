@@ -11,7 +11,7 @@
     return_content: yes
   register: api_key
 
-- name: Makre sure ~/.kube dirs exist
+- name: Make sure ~/.kube dirs exist
   file:
     path: "{{ item }}/.kube"
     state: directory
@@ -29,3 +29,15 @@
   with_items:
     - {'file': '/root/.kube/config', 'user': 'root'}
     - {'file': '/home/ubuntu/.kube/config', 'user': 'ubuntu'}
+  register: kubectl_config
+
+- name: Wait for the K8S project to become active
+  uri:
+    method: GET
+    status_code: 200
+    url: "http://{{ rancher_server }}:{{ rancher_port }}/v2-beta/projects/{{ project_id.stdout }}"
+    return_content: yes
+  register: project
+  until: project.json.state == 'active'
+  retries: 12
+  delay: 10
