@@ -39,5 +39,5 @@
     return_content: yes
   register: project
   until: project.json.healthState == 'active'
-  retries: 12
-  delay: 10
+  retries: 20
+  delay: 11
