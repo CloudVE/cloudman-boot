@@ -1,0 +1,11 @@
+---
+- name: Clone CloudMan repo
+  git:
+    repo: 'https://github.com/galaxyproject/cloudman.git'
+    dest: /opt/cloudman
+    version: v2.0
+
+- name: Start CloudMan via Helm
+  shell: helm install k8s/cloudman
+  args:
+    chdir: /opt/cloudman

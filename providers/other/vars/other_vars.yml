@@ -11,6 +11,7 @@ rancher_agents_user: ubuntu
 rancher_cli_version: v0.6.1
 
 kubectl_version: v1.5.4
+helm_version: v2.1.3
 
 k8s_project_name: CMk8s
 

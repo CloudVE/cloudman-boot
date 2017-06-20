@@ -1,0 +1,31 @@
+---
+- name: Get the K8S env project id
+  shell: rancher --url http://localhost:{{ rancher_port }} env | grep {{ k8s_project_name }} | cut -f1 -d' '
+  register: project_id
+
+- name: Get the API key
+  uri:
+    method: POST
+    status_code: 201
+    url: "http://{{ rancher_server }}:{{ rancher_port }}/v2-beta/projects/{{ project_id.stdout }}/apikey"
+    return_content: yes
+  register: api_key
+
+- name: Makre sure ~/.kube dirs exist
+  file:
+    path: "{{ item }}/.kube"
+    state: directory
+  with_items:
+    - /root
+    - /home/ubuntu
+
+- name: Generate kubectl config
+  template:
+    src: kubectl_config.j2
+    dest: "{{ item.file }}"
+    mode: 0600
+    owner: "{{ item.user }}"
+    group: "{{ item.user }}"
+  with_items:
+    - {'file': '/root/.kube/config', 'user': 'root'}
+    - {'file': '/home/ubuntu/.kube/config', 'user': 'ubuntu'}

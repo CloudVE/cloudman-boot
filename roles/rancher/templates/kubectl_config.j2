@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Config
+clusters:
+- cluster:
+    api-version: v1
+    insecure-skip-tls-verify: true
+    server: "https://{{ rancher_server }}:{{ rancher_port }}/r/projects/{{ project_id.stdout }}/kubernetes"
+  name: "{{ k8s_project_name }}"
+contexts:
+- context:
+    cluster: "{{ k8s_project_name }}"
+    user: "{{ k8s_project_name }}"
+  name: "{{ k8s_project_name }}"
+current-context: "{{ k8s_project_name }}"
+users:
+- name: "{{ k8s_project_name }}"
+  user:
+    username: "{{ api_key.json.publicValue }}"
+    password: "{{ api_key.json.secretValue }}"
