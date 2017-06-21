@@ -38,6 +38,6 @@
     url: "http://{{ rancher_server }}:{{ rancher_port }}/v2-beta/projects/{{ project_id.stdout }}"
     return_content: yes
   register: project
-  until: project.json.healthState == 'active'
+  until: project.json.healthState == 'healthy'
   retries: 20
   delay: 11
