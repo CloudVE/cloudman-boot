@@ -11,24 +11,16 @@
     return_content: yes
   register: api_key
 
-- name: Make sure ~/.kube dirs exist
+- name: Make sure kube conf dir exist
   file:
-    path: "{{ item }}/.kube"
+    path: "{{ kube_dir }}"
     state: directory
-  with_items:
-    - /root
-    - /home/ubuntu
 
 - name: Generate kubectl config
   template:
     src: kubectl_config.j2
-    dest: "{{ item.file }}"
+    dest: "{{ kube_dir }}/config"
     mode: 0600
-    owner: "{{ item.user }}"
-    group: "{{ item.user }}"
-  with_items:
-    - {'file': '/root/.kube/config', 'user': 'root'}
-    - {'file': '/home/ubuntu/.kube/config', 'user': 'ubuntu'}
   register: kubectl_config
 
 - name: Wait for the K8S project to become active
@@ -39,5 +31,10 @@
     return_content: yes
   register: project
   until: project.json.healthState == 'healthy'
-  retries: 20
+  retries: 30
   delay: 11
+
+- name: Init Helm
+  environment:
+    KUBECONFIG: "{{ kube_dir }}/config"
+  shell: helm init

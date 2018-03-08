@@ -50,14 +50,15 @@
 - name: Add a K8S env
   shell: rancher --url http://localhost:{{ rancher_port }} env create -t kubernetes {{ k8s_project_name }}
   when: "env.rc == 1"
+  register: env_create
+  until: "env_create.rc == 0"
+  retries: 10
+  delay: 10
 
 - include: server_as_host.yml
   when: server_as_host
 
 - include: kubectl_config.yml
-
-- name: Init Helm
-  shell: helm init
 
 - include: cloudman.yml
 

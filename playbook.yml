@@ -5,7 +5,8 @@
   vars_files:
     - providers/other/vars/other_vars.yml
   vars:
-    - ansible_python_interpreter: /usr/bin/python3
+    - ansible_python_interpreter: "/usr/bin/env python"
+  #   - ansible_python_interpreter: /usr/bin/python3
   roles:
     - { role: docker, tags: ["docker"] }
 
@@ -13,9 +14,11 @@
   hosts: "Rancher"
   vars_files:
     - providers/other/vars/other_vars.yml
+  environment:
+    PATH: "{{ ansible_env.PATH }}:/usr/local/bin"
   become: yes
   vars:
-    - ansible_python_interpreter: /usr/bin/python3
+    - ansible_python_interpreter: "/usr/bin/env python"
   roles:
     - { role: rancher, tags: ["rancher"] }
 
@@ -25,6 +28,6 @@
   vars_files:
     - providers/other/vars/other_vars.yml
   vars:
-    - ansible_python_interpreter: /usr/bin/python3
+    - ansible_python_interpreter: "/usr/bin/env python"
   roles:
     - { role: rancher_reg, tags: ["rancher_reg"] }

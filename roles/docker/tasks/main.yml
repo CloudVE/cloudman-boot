@@ -32,3 +32,8 @@
       owner=root
       group=root
   notify: restart docker
+
+- name: Make sure git is installed
+  package:
+    name: git
+    state: latest

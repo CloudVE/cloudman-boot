@@ -4,7 +4,7 @@ clusters:
 - cluster:
     api-version: v1
     insecure-skip-tls-verify: true
-    server: "https://{{ rancher_server }}:{{ rancher_port }}/r/projects/{{ project_id.stdout }}/kubernetes"
+    server: "http://{{ rancher_server }}:{{ rancher_port }}/r/projects/{{ project_id.stdout }}/kubernetes"
   name: "{{ k8s_project_name }}"
 contexts:
 - context:
