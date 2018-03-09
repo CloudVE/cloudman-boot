@@ -7,6 +7,11 @@
   vars:
     - ansible_python_interpreter: "/usr/bin/env python"
   #   - ansible_python_interpreter: /usr/bin/python3
+  pre_tasks:
+    # Amazon Linux reports 'Amazon' as the disribution, making yum repo links
+    # not work so set our own default
+    - set_fact: ansible_distribution=CentOS
+      when: ansible_distribution == "Amazon"
   roles:
     - { role: docker, tags: ["docker"] }
 
