@@ -55,6 +55,26 @@
   retries: 10
   delay: 10
 
+- name: Get the K8S env project id
+  shell: rancher --url http://localhost:{{ rancher_port }} env | grep {{ k8s_project_name }} | cut -f1 -d' '
+  register: project_id
+
+- name: Set the K8S env as the default
+  uri:
+    method: PUT
+    status_code: 200
+    url: "http://{{ rancher_server }}:{{ rancher_port }}/v2-beta/userpreferences/1up2"
+    body: "value={{ project_id.stdout }}"
+    return_content: yes
+
+- name: Deactivate the default env
+  uri:
+    method: POST
+    status_code: 200, 422
+    url: "http://{{ rancher_server }}:{{ rancher_port }}/v2-beta/projects/1a5/"
+    body: "action=deactivate"
+    return_content: yes
+
 - include: server_as_host.yml
   when: server_as_host
 

@@ -4,10 +4,6 @@
     name: httplib2
     state: latest
 
-- name: Get the new K8S env project id
-  shell: rancher --url http://localhost:{{ rancher_port }} env | grep {{ k8s_project_name }} | cut -f1 -d' '
-  register: project_id
-
 - name: Return the registration token URL of Rancher server
   uri:
     method: POST

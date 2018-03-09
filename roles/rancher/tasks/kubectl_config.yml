@@ -31,8 +31,8 @@
     return_content: yes
   register: project
   until: project.json.healthState == 'healthy'
-  retries: 30
-  delay: 11
+  retries: 40
+  delay: 15
 
 - name: Init Helm
   environment:
