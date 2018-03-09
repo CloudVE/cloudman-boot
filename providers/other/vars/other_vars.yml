@@ -7,6 +7,8 @@ rancher_agent_version: v1.2.9
 rancher_port: 8080
 rancher_server_user: ubuntu
 rancher_agents_user: ubuntu
+rancher_admin: admin
+rancher_password: Something-To-Change
 
 rancher_cli_version: v0.6.7
 

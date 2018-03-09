@@ -1,15 +1,17 @@
 ---
 - name: Get the K8S env project id
-  shell: rancher --url http://localhost:{{ rancher_port }} env | grep {{ k8s_project_name }} | cut -f1 -d' '
+  shell: rancher --url http://localhost:{{ rancher_port }} --access-key {{ api_user }} --secret-key {{ api_password }} env | grep {{ k8s_project_name }} | cut -f1 -d' '
   register: project_id
 
-- name: Get the API key
+- name: Get the environment API key
   uri:
     method: POST
     status_code: 201
     url: "http://{{ rancher_server }}:{{ rancher_port }}/v2-beta/projects/{{ project_id.stdout }}/apikey"
     return_content: yes
-  register: api_key
+    user: "{{ api_user }}"
+    password: "{{ api_password }}"
+  register: env_api_key
 
 - name: Make sure kube conf dir exist
   file:
@@ -29,6 +31,8 @@
     status_code: 200
     url: "http://{{ rancher_server }}:{{ rancher_port }}/v2-beta/projects/{{ project_id.stdout }}"
     return_content: yes
+    user: "{{ api_user }}"
+    password: "{{ api_password }}"
   register: project
   until: project.json.healthState == 'healthy'
   retries: 40

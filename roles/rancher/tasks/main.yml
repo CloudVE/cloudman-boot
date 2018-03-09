@@ -14,6 +14,54 @@
   retries: 30
   delay: 10
 
+- name: Check if login is required
+  uri:
+    method: GET
+    status_code: 200, 401
+    url: "http://{{ rancher_server }}:{{ rancher_port }}"
+    return_content: yes
+  register: first_request
+
+- name: Enable login (i.e., access control) if not enabled
+  uri:
+    method: POST
+    status_code: 201
+    url: "http://{{ rancher_server }}:{{ rancher_port }}/v2-beta/localauthconfig"
+    body: "enabled=true&accessMode=unrestricted&username={{ rancher_admin }}&password={{ rancher_password }}"
+  when: "{{ first_request.status }} == 200"
+
+# After login has been enabled, we need access key and secret key but to get
+# those, we need to generate them first. So simulate the UI requests to obtain
+# the key pair
+- name: Get a token
+  uri:
+    method: POST
+    status_code: 201
+    url: "http://{{ rancher_server }}:{{ rancher_port }}/v2-beta/token"
+    body: "authProvider=localauthconfig&code={{ rancher_admin }}:{{ rancher_password }}"
+    return_content: yes
+    headers:
+      Accept: application/json
+  register: acct_token_response
+
+- set_fact:
+    acct_token: "{{ acct_token_response.json.jwt }}"
+
+- name: Add account API key
+  uri:
+    method: POST
+    status_code: 201
+    url: "http://{{ rancher_server }}:{{ rancher_port }}/v2-beta/apikey"
+    body: "token={{ acct_token }}&name=cloudlaunch-api-key"
+    return_content: yes
+    headers:
+      Accept: application/json
+  register: acct_api_key
+
+- set_fact:
+    api_user: "{{ acct_api_key.json.publicValue }}"
+    api_password: "{{ acct_api_key.json.secretValue }}"
+
 - name: Download kubectl script
   get_url:
     url: https://storage.googleapis.com/kubernetes-release/release/{{ kubectl_version }}/bin/linux/amd64/kubectl
@@ -43,12 +91,12 @@
     - /tmp/linux-amd64/helm
 
 - name: Check if env already exists and don't add it again
-  shell: rancher --url http://localhost:{{ rancher_port }} env | grep {{ k8s_project_name }}
+  shell: rancher --url http://localhost:{{ rancher_port }} --access-key {{ api_user }} --secret-key {{ api_password }} env | grep {{ k8s_project_name }}
   register: env
   failed_when: "env.rc == 2"
 
 - name: Add a K8S env
-  shell: rancher --url http://localhost:{{ rancher_port }} env create -t kubernetes {{ k8s_project_name }}
+  shell: rancher --url http://localhost:{{ rancher_port }} --access-key {{ api_user }} --secret-key {{ api_password }} env create -t kubernetes {{ k8s_project_name }}
   when: "env.rc == 1"
   register: env_create
   until: "env_create.rc == 0"
@@ -56,8 +104,13 @@
   delay: 10
 
 - name: Get the K8S env project id
-  shell: rancher --url http://localhost:{{ rancher_port }} env | grep {{ k8s_project_name }} | cut -f1 -d' '
+  shell: rancher --url http://localhost:{{ rancher_port }} --access-key {{ api_user }} --secret-key {{ api_password }} env | grep {{ k8s_project_name }} | cut -f1 -d' '
   register: project_id
+
+- include: server_as_host.yml
+  when: server_as_host
+
+- include: kubectl_config.yml
 
 - name: Set the K8S env as the default
   uri:
@@ -65,7 +118,8 @@
     status_code: 200
     url: "http://{{ rancher_server }}:{{ rancher_port }}/v2-beta/userpreferences/1up2"
     body: "value={{ project_id.stdout }}"
-    return_content: yes
+    user: "{{ api_user }}"
+    password: "{{ api_password }}"
 
 - name: Deactivate the default env
   uri:
@@ -73,14 +127,11 @@
     status_code: 200, 422
     url: "http://{{ rancher_server }}:{{ rancher_port }}/v2-beta/projects/1a5/"
     body: "action=deactivate"
-    return_content: yes
+    user: "{{ api_user }}"
+    password: "{{ api_password }}"
 
-- include: server_as_host.yml
-  when: server_as_host
-
-- include: kubectl_config.yml
-
-- include: cloudman.yml
+# Not yet working
+# - include: cloudman.yml
 
 - name: Print Rancher's URL
   debug: msg="You can connect to rancher server http://{{ ansible_ssh_host }}:{{ rancher_port }}"
