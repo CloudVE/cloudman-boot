@@ -7,7 +7,7 @@
   uri:
     method: POST
     status_code: 201
-    url: "http://{{ rancher_server }}:{{ rancher_port }}/v2-beta/projects/{{ project_id.stdout }}/apikey"
+    url: "http://localhost:{{ rancher_port }}/v2-beta/projects/{{ project_id.stdout }}/apikey"
     return_content: yes
     user: "{{ api_user }}"
     password: "{{ api_password }}"
@@ -29,7 +29,7 @@
   uri:
     method: GET
     status_code: 200
-    url: "http://{{ rancher_server }}:{{ rancher_port }}/v2-beta/projects/{{ project_id.stdout }}"
+    url: "http://localhost:{{ rancher_port }}/v2-beta/projects/{{ project_id.stdout }}"
     return_content: yes
     user: "{{ api_user }}"
     password: "{{ api_password }}"
@@ -38,6 +38,7 @@
   retries: 40
   delay: 15
 
+# FIXME: This task fails once Access Control is enabled in Rancher
 - name: Init Helm
   environment:
     KUBECONFIG: "{{ kube_dir }}/config"

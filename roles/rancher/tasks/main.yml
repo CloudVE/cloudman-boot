@@ -1,5 +1,5 @@
 ---
-- name: Pull and run the Rancher/server contianer
+- name: Pull and run the Rancher/server container
   docker_container:
       name: "{{ rancher_name }}"
       image: rancher/server:{{ rancher_version }}
@@ -18,15 +18,17 @@
   uri:
     method: GET
     status_code: 200, 401
-    url: "http://{{ rancher_server }}:{{ rancher_port }}"
+    url: "http://localhost:{{ rancher_port }}"
     return_content: yes
   register: first_request
+  retries: 10
+  delay: 1
 
 - name: Enable login (i.e., access control) if not enabled
   uri:
     method: POST
     status_code: 201
-    url: "http://{{ rancher_server }}:{{ rancher_port }}/v2-beta/localauthconfig"
+    url: "http://localhost:{{ rancher_port }}/v2-beta/localauthconfig"
     body: "enabled=true&accessMode=unrestricted&username={{ rancher_admin }}&password={{ rancher_password }}"
   when: "{{ first_request.status }} == 200"
 
@@ -37,7 +39,7 @@
   uri:
     method: POST
     status_code: 201
-    url: "http://{{ rancher_server }}:{{ rancher_port }}/v2-beta/token"
+    url: "http://localhost:{{ rancher_port }}/v2-beta/token"
     body: "authProvider=localauthconfig&code={{ rancher_admin }}:{{ rancher_password }}"
     return_content: yes
     headers:
@@ -51,7 +53,7 @@
   uri:
     method: POST
     status_code: 201
-    url: "http://{{ rancher_server }}:{{ rancher_port }}/v2-beta/apikey"
+    url: "http://localhost:{{ rancher_port }}/v2-beta/apikey"
     body: "token={{ acct_token }}&name=cloudlaunch-api-key"
     return_content: yes
     headers:
@@ -116,7 +118,8 @@
   uri:
     method: PUT
     status_code: 200
-    url: "http://{{ rancher_server }}:{{ rancher_port }}/v2-beta/userpreferences/1up2"
+    # url: "http://{{ rancher_server }}:{{ rancher_port }}/v2-beta/userpreferences/1up2"
+    url: "http://localhost:{{ rancher_port }}/v2-beta/userpreferences/1up2"
     body: "value={{ project_id.stdout }}"
     user: "{{ api_user }}"
     password: "{{ api_password }}"
@@ -125,7 +128,8 @@
   uri:
     method: POST
     status_code: 200, 422
-    url: "http://{{ rancher_server }}:{{ rancher_port }}/v2-beta/projects/1a5/"
+    # url: "http://{{ rancher_server }}:{{ rancher_port }}/v2-beta/projects/1a5/"
+    url: "http://localhost:{{ rancher_port }}/v2-beta/projects/1a5/"
     body: "action=deactivate"
     user: "{{ api_user }}"
     password: "{{ api_password }}"

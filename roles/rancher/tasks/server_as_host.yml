@@ -8,6 +8,10 @@
   uri:
     method: POST
     status_code: 201
+    # FIXME: Using locahost here instead of rancher_server does not work
+    # because "Register Rancher server as a host" task fails. Rancher requires
+    # its hosts to have a public IP and the output of this task defined the URL
+    # of the hast add task.
     url: "http://{{ rancher_server }}:{{ rancher_port }}/v1/registrationtokens?projectId={{ project_id.stdout }}"
     return_content: yes
     user: "{{ api_user }}"
@@ -22,6 +26,9 @@
     user: "{{ api_user }}"
     password: "{{ api_password }}"
   register: rancher_token
+
+- debug:
+    msg: "rancher_token_url: {{ rancher_token_url }}   ---  {{ rancher_token.json['registrationUrl'] }}"
 
 - name: Check if the rancher-agent is running
   command: docker ps -a
