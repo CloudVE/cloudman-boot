@@ -8,11 +8,7 @@
   uri:
     method: POST
     status_code: 201
-    # FIXME: Using locahost here instead of rancher_server does not work
-    # because "Register Rancher server as a host" task fails. Rancher requires
-    # its hosts to have a public IP and the output of this task defined the URL
-    # of the hast add task.
-    url: "http://{{ rancher_server }}:{{ rancher_port }}/v1/registrationtokens?projectId={{ project_id.stdout }}"
+   url: "http://localhost:{{ rancher_port }}/v1/registrationtokens?projectId={{ project_id.stdout }}"
     return_content: yes
     user: "{{ api_user }}"
     password: "{{ api_password }}"
@@ -27,9 +23,6 @@
     password: "{{ api_password }}"
   register: rancher_token
 
-- debug:
-    msg: "rancher_token_url: {{ rancher_token_url }}   ---  {{ rancher_token.json['registrationUrl'] }}"
-
 - name: Check if the rancher-agent is running
   command: docker ps -a
   register: containers
@@ -37,12 +30,31 @@
 - name: Register Rancher server as a host
   docker_container:
       name: "{{ rancher_name }}Host"
-      image: "{{ rancher_token.json['image'] }}"
+      image: "rancher/agent:{{ rancher_agent_version }}"
       privileged: yes
       detach: True
+      # auto_remove: yes  # Does not work: this option requires 'docker' Python module, other tasks require 'docker-py' and they're not compatible
       volumes:
         - /var/run/docker.sock:/var/run/docker.sock
         - /var/lib/rancher:/var/lib/rancher
-      command: "{{ rancher_token.json['registrationUrl'] }}"
+      command: "http://{{ rancher_server }}:{{ rancher_port }}/v1/scripts/{{ rancher_token.json['registrationUrl'].split('/')[-1] }}"
+      env:
+        CATTLE_AGENT_IP: "{{ rancher_server }}"
       state: started
   when: "{{ 'rancher-agent' not in containers.stdout }}"
+.
+# An alternative host registration task - requires use of public server address
+# in the "Return the registration token URL of Rancher server" task
+# - name: Register Rancher server as a host
+#   docker_container:
+#       name: "{{ rancher_name }}Host"
+#       image: "{{ rancher_token.json['image'] }}"
+#       privileged: yes
+#       detach: True
+#       volumes:
+#         - /var/run/docker.sock:/var/run/docker.sock
+#         - /var/lib/rancher:/var/lib/rancher
+#       command: "{{ rancher_token.json['registrationUrl'] }}"
+#       state: started
+#   when: "{{ 'rancher-agent' not in containers.stdout }}"
+
