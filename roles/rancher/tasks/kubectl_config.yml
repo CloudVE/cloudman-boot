@@ -1,6 +1,6 @@
 ---
 - name: Get the K8S env project id
-  shell: rancher --url http://localhost:{{ rancher_port }} --access-key {{ api_user }} --secret-key {{ api_password }} env | grep {{ k8s_project_name }} | cut -f1 -d' '
+  shell: rancher --url http://localhost:{{ rancher_port }} env | grep {{ k8s_project_name }} | cut -f1 -d' '
   register: project_id
 
 - name: Get the environment API key
@@ -9,8 +9,6 @@
     status_code: 201
     url: "http://localhost:{{ rancher_port }}/v2-beta/projects/{{ project_id.stdout }}/apikey"
     return_content: yes
-    user: "{{ api_user }}"
-    password: "{{ api_password }}"
   register: env_api_key
 
 - name: Make sure kube conf dir exist
@@ -31,14 +29,12 @@
     status_code: 200
     url: "http://localhost:{{ rancher_port }}/v2-beta/projects/{{ project_id.stdout }}"
     return_content: yes
-    user: "{{ api_user }}"
-    password: "{{ api_password }}"
   register: project
   until: project.json.healthState == 'healthy'
   retries: 40
   delay: 15
 
-# FIXME: This task fails once Access Control is enabled in Rancher
+# This task fails if Access Control is enabled in Rancher
 - name: Init Helm
   environment:
     KUBECONFIG: "{{ kube_dir }}/config"

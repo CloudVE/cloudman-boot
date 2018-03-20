@@ -8,10 +8,8 @@
   uri:
     method: POST
     status_code: 201
-   url: "http://localhost:{{ rancher_port }}/v1/registrationtokens?projectId={{ project_id.stdout }}"
+    url: "http://localhost:{{ rancher_port }}/v1/registrationtokens?projectId={{ project_id.stdout }}"
     return_content: yes
-    user: "{{ api_user }}"
-    password: "{{ api_password }}"
   register: rancher_token_url
 
 - name: Return the registration URL of Rancher server
@@ -19,8 +17,6 @@
     method: GET
     url: "{{ rancher_token_url.json['links']['self'] }}"
     return_content: yes
-    user: "{{ api_user }}"
-    password: "{{ api_password }}"
   register: rancher_token
 
 - name: Check if the rancher-agent is running
@@ -42,7 +38,7 @@
         CATTLE_AGENT_IP: "{{ rancher_server }}"
       state: started
   when: "{{ 'rancher-agent' not in containers.stdout }}"
-.
+
 # An alternative host registration task - requires use of public server address
 # in the "Return the registration token URL of Rancher server" task
 # - name: Register Rancher server as a host
@@ -57,4 +53,3 @@
 #       command: "{{ rancher_token.json['registrationUrl'] }}"
 #       state: started
 #   when: "{{ 'rancher-agent' not in containers.stdout }}"
-
