@@ -64,23 +64,13 @@
 
 - include: kubectl_config.yml
 
-- name: Set the K8S env as the default
-  uri:
-    method: PUT
-    status_code: 200
-    url: "http://localhost:{{ rancher_port }}/v2-beta/userpreferences/1up3"
-    body: "value={{ project_id.stdout }}"
-    retries: 10
-    delay: 2
-
+# Deactivating the default env/project implicitly makes the new env the default
 - name: Deactivate the default env
   uri:
     method: POST
     status_code: 200, 422
     url: "http://localhost:{{ rancher_port }}/v2-beta/projects/1a5/"
     body: "action=deactivate"
-    retries: 10
-    delay: 2
 
 # Not yet working
 # - include: cloudman.yml
