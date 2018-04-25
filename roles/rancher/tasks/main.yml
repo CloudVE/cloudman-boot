@@ -3,9 +3,10 @@
   docker_container:
       name: "{{ rancher_name }}"
       image: rancher/server:{{ rancher_version }}
-      restart_policy: always
+      restart_policy: unless-stopped
       ports:
-        - "{{ rancher_port }}:8080"
+        - 80:80
+        - 443:443
 
 - name: Wait for the Rancher server to start
   action: command docker logs {{ rancher_name }}
@@ -14,11 +15,197 @@
   retries: 30
   delay: 10
 
+- name: Setup login
+  uri:
+    url: "https://127.0.0.1:{{ rancher_port }}/v3-public/localProviders/local?action=login"
+    method: POST
+    body_format: json
+    body:
+      username: admin
+      password: admin
+    validate_certs: no
+    status_code: 201
+    return_content: yes
+  ignore_errors: yes
+  register: login_response
+
+- name: Set current admin password
+  set_fact:
+    rpwd: admin
+    token: "{{ login_response.json.token }}"
+  when: login_response is succeeded
+
+- name: Re-setup login
+  uri:
+    url: "https://127.0.0.1:{{ rancher_port }}/v3-public/localProviders/local?action=login"
+    method: POST
+    body_format: json
+    body:
+      username: admin
+      password: "{{ rancher_password }}"
+    validate_certs: no
+    status_code: 201
+    return_content: yes
+  register: login_response
+  when: login_response is failed
+
+- name: Set current admin password
+  set_fact:
+    rpwd: "{{ rancher_password }}"
+    token: "{{ login_response.json.token }}"
+  when: rpwd is undefined
+
+- name: Change password
+  uri:
+    url: https://127.0.0.1:{{ rancher_port }}/v3/users?action=changepassword
+    method: POST
+    body_format: json
+    body:
+      currentPassword: "{{ rpwd }}"
+      newPassword: "{{ rancher_password }}"
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+
+# - name: Create an API key
+#   uri:
+#     url: https://127.0.0.1:{{ rancher_port }}/v3/token
+#     method: POST
+#     body_format: json
+#     body:
+#       type: token
+#       description: cloudman-boot ansible
+#       ttl: 3600000  # Expires in 1 hour
+#     headers:
+#       Authorization: Bearer {{ token }}
+#     validate_certs: no
+#     status_code: 201
+#   register: api_token
+
+- name: Configure server URL
+  uri:
+    url: https://127.0.0.1:{{ rancher_port }}/v3/settings/server-url
+    method: PUT
+    body_format: json
+    body:
+      name: server-url
+      value: "{{ ansible_ssh_host }}"
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+
+- name: Check if cluster already exists
+  uri:
+    url: https://127.0.0.1:{{ rancher_port }}/v3/clusters?name={{ cm_cluster_name }}
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+  register: clusters
+
+- name: Store existing cluster id
+  set_fact:
+    cluster_id: "{{ clusters.json.data[0].id }}"
+  when: clusters.json.data | length > 0
+
+- name: Create a cluster
+  uri:
+    url: https://127.0.0.1:{{ rancher_port }}/v3/cluster
+    method: POST
+    body_format: json
+    body:
+      type: cluster
+      rancherKubernetesEngineConfig:
+        ignoreDockerVersion: false
+        ingress:
+          provider: nginx
+          type: ingressConfig
+      name: "{{ cm_cluster_name }}"
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+    status_code: 201
+  register: cluster
+  when: clusters.json.data | length == 0
+
+- name: Store new cluster id
+  set_fact:
+    cluster_id: "{{ cluster.json.id }}"
+  when: cluster is not skipped
+
+- name: Generate cluster registration token and extract node command
+  uri:
+    url: https://127.0.0.1:{{ rancher_port }}/v3/clusterregistrationtoken
+    method: POST
+    body_format: json
+    body:
+      type: clusterRegistrationToken
+      clusterId: "{{ cluster_id }}"
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+    status_code: 201
+  register: node_command
+
+- name: Edit node command
+  set_fact:
+    node_command: "{{ node_command.json.nodeCommand | replace('--server  ', '--server https://' ~ ansible_default_ipv4.address ~ ':' ~ rancher_port ~ ' ') }}"
+
+- name: Get current cluster status
+  uri:
+    url: https://127.0.0.1:{{ rancher_port }}/v3/clusters/{{ cluster_id }}
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+  register: cluster_state1
+
+- name: Add master as a node
+  command: "{{ node_command }} --etcd --controlplane --worker"
+  when: cluster_state1.json.state == "provisioning"
+
+- name: Wait for the cluster to become active
+  uri:
+    url: https://127.0.0.1:{{ rancher_port }}/v3/clusters/{{ cluster_id }}
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+  register: cluster_state_dbg
+
+- name: Wait for the cluster to become active
+  uri:
+    url: https://127.0.0.1:{{ rancher_port }}/v3/clusters/{{ cluster_id }}
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+  register: cluster_state2
+  until: '"active" in cluster_state2.json.state'
+  retries: 100
+  delay: 15
+
+- name: Make sure kube conf dir exist
+  file:
+    path: "{{ kube_dir }}"
+    state: directory
+
 - name: Download kubectl script
   get_url:
     url: https://storage.googleapis.com/kubernetes-release/release/{{ kubectl_version }}/bin/linux/amd64/kubectl
     dest: /usr/local/bin
     mode: 0755
+
+- name: Get kubectl config
+  uri:
+    url: https://127.0.0.1:{{ rancher_port }}/v3/clusters/{{ cluster_id }}?action=generateKubeconfig
+    method: POST
+    headers:
+      Content-Type: application/json
+      Authorization: Bearer {{ token }}
+    validate_certs:
+  register: kubectl_config
+
+- name: Save kubectl config
+  copy:
+    content: "{{ kubectl_config.json.config }}"
+    dest: "{{ kube_dir }}/config"
 
 - name: Fetch Helm
   unarchive:
@@ -26,72 +213,21 @@
     dest: /tmp
     remote_src: True
 
-- name: Fetch rancher CLI
-  unarchive:
-    src: https://github.com/rancher/cli/releases/download/{{ rancher_cli_version }}/rancher-linux-amd64-{{ rancher_cli_version }}.tar.gz
-    dest: /tmp
-    remote_src: True
-
-- name: Place downloaded scripts
+- name: Place helm script
   copy:
-    src: "{{ item }}"
+    src: /tmp/linux-amd64/helm
     dest: /usr/local/bin
     mode: 0755
     remote_src: True
-  with_items:
-    - /tmp/rancher-{{ rancher_cli_version }}/rancher
-    - /tmp/linux-amd64/helm
 
-- name: Check if env already exists and don't add it again
-  shell: rancher --url http://localhost:{{ rancher_port }} env | grep {{ k8s_project_name }}
-  register: env
-  failed_when: "env.rc == 2"
-
-- name: Add a K8S env
-  shell: rancher --url http://localhost:{{ rancher_port }} env create -t kubernetes {{ k8s_project_name }}
-  when: "env.rc == 1"
-  register: env_create
-  until: "env_create.rc == 0"
-  retries: 10
-  delay: 10
-
-- name: Get the K8S env project id
-  shell: rancher --url http://localhost:{{ rancher_port }} env | grep {{ k8s_project_name }} | cut -f1 -d' '
-  register: project_id
-
-- include: server_as_host.yml
-  when: server_as_host
-
-- include: kubectl_config.yml
-
-# Deactivating the default env/project implicitly makes the new env the default
-- name: Deactivate the default env
-  uri:
-    method: POST
-    status_code: 200, 422
-    url: "http://localhost:{{ rancher_port }}/v2-beta/projects/1a5/"
-    body: "action=deactivate"
+- name: Init Helm
+  environment:
+    KUBECONFIG: "{{ kube_dir }}/config"
+  shell: helm init
 
 # Not yet working
 # - include: cloudman.yml
 
-- name: Check if login is required
-  uri:
-    method: GET
-    status_code: 200, 401
-    url: "http://localhost:{{ rancher_port }}"
-    return_content: yes
-  register: first_request
-  retries: 10
-  delay: 1
-
-- name: Enable login (i.e., access control) if not enabled
-  uri:
-    method: POST
-    status_code: 201
-    url: "http://localhost:{{ rancher_port }}/v2-beta/localauthconfig"
-    body: "enabled=true&accessMode=unrestricted&username={{ rancher_admin }}&password={{ rancher_password }}"
-  when: "{{ first_request.status }} == 200"
-
 - name: Print Rancher's URL
-  debug: msg="You can connect to rancher server http://{{ ansible_ssh_host }}:{{ rancher_port }}"
+  debug:
+    msg: "You can connect to rancher server https://{{ ansible_ssh_host }}:{{ rancher_port }}"

@@ -1,21 +1,15 @@
 ---
-
 rancher_name: rancher_server
 rancher_server: "{{ hostvars['rancher']['ansible_ssh_host'] }}"
-rancher_version: v1.6.14
-rancher_agent_version: v1.2.9
-rancher_port: 8080
+rancher_version: preview
+rancher_port: 443
 rancher_server_user: ubuntu
 rancher_agents_user: ubuntu
 rancher_admin: admin
 rancher_password: Something-To-Change
 
-rancher_cli_version: v0.6.7
-
 kubectl_version: v1.5.4
 helm_version: v2.8.1
 
-k8s_project_name: CMk8s
+cm_cluster_name: cloudman-cluster
 kube_dir: /opt/kube
-
-server_as_host: yes
