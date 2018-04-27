@@ -2,11 +2,11 @@
 - name: Include OS-specific variables.
   include_vars: "{{ ansible_os_family }}.yml"
 
-- include: docker-redhat.yml
+- import_tasks: docker-redhat.yml
   when: ansible_os_family == 'RedHat'
   static: no
 
-- include: docker-debian.yml
+- import_tasks: docker-debian.yml
   when: ansible_os_family == 'Debian'
   static: no
 
