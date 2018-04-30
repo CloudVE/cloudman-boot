@@ -5,8 +5,8 @@
       image: rancher/server:{{ rancher_version }}
       restart_policy: unless-stopped
       ports:
-        - 80:80
-        - 443:443
+        - "{{ rancher_port_80}}:80"
+        - "{{ rancher_port }}:443"
 
 - name: Get the host public IP address
   uri:
@@ -156,6 +156,10 @@
 - name: Edit node command
   set_fact:
     node_command: "{{ node_command.json.nodeCommand | replace('--server  ', '--server https://' ~ public_ip ~ ':' ~ rancher_port ~ ' ') }}"
+
+- name: Remove sudo from the node command
+  set_fact:
+    node_command: "{{ node_command | replace('sudo ', '') }}"
 
 - name: Get current cluster status
   uri:
