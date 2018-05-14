@@ -192,6 +192,134 @@
   retries: 100
   delay: 15
 
+- name: Check if cloudman app is in the catalog already
+  uri:
+    url: https://{{ public_ip }}:{{ rancher_port }}/v3/catalogs?name={{ cm_helm_app_name }}
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+  register: cm_helm_app
+
+- name: Disable the default library catalog
+  uri:
+    url: https://{{ public_ip }}:{{ rancher_port }}/v3/catalogs/library
+    method: DELETE
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+
+- name: Add CloudMan Helm repo to the catalog
+  uri:
+    url: https://{{ public_ip }}:{{ rancher_port }}/v3/catalog
+    method: POST
+    body_format: json
+    body:
+      branch: master
+      kind: helm
+      name: "{{ cm_helm_app_name }}"
+      type: catalog
+      url: https://github.com/CloudVE/cloudman-helm.git
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+    status_code: 201
+  when: cm_helm_app.json.data | length == 0
+
+- name: Get project info
+  uri:
+    url: https://{{ public_ip }}:{{ rancher_port }}/v3/projects?clusterId={{ cluster_id }}
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+  register: project
+
+- name: Set project id
+  set_fact:
+    project_id: "{{ project.json.data[0].id }}"
+
+- name: Check if namespace already exists
+  uri:
+    url: https://{{ public_ip }}:{{ rancher_port }}/v3/cluster/{{ cluster_id }}/namespaces?name={{ cm_namespace_name }}
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+  register: cm_ns
+
+- name: Add CloudMan namespace
+  uri:
+    url: https://{{ public_ip }}:{{ rancher_port }}/v3/clusters/{{ cluster_id }}/namespace
+    method: POST
+    body_format: json
+    body:
+      name: "{{ cm_namespace_name }}"
+      type: namespace
+      projectId: "{{ project_id }}"
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+    status_code: 201
+  when: cm_ns.json.data | length == 0
+
+- name: Check if CloudMan app has been added
+  uri:
+    url: https://{{ public_ip }}:{{ rancher_port }}/v3/project/{{ project_id }}/apps?name=cloudman
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+  register: cm_app
+
+- name: Launch CloudMan app
+  uri:
+    url: https://{{ public_ip }}:{{ rancher_port }}/v3/projects/{{ project_id }}/app
+    method: POST
+    body_format: json
+    body:
+      name: cloudman
+      targetNamespace: "{{ cm_namespace_name }}"
+      type: app
+      prune: false
+      projectId: "{{ project_id }}"
+      externalId: "catalog://?catalog={{ cm_helm_app_name }}&template=cloudman&version={{ cm_helm_version }}"
+      answers:
+        RANCHER_API_KEY: "{{ token }}"
+        RANCHER_NODE_COMMAND: "{{ node_command }} --worker"
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+    status_code: 201
+  when: cm_app.json.data | length == 0
+
+- name: Check if CloudMan ingress exists
+  uri:
+    url: https://{{ public_ip }}:{{ rancher_port }}/v3/project/{{ project_id }}/ingresses?name={{ cm_ingress_name }}
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+  register: cm_ingress
+
+- name: Add CloudMan ingress
+  uri:
+    url: https://{{ public_ip }}:{{ rancher_port }}/v3/projects/{{ project_id }}/ingress
+    method: POST
+    body_format: json
+    body:
+      name: "{{ cm_ingress_name }}"
+      namespaceId: "{{ cm_namespace_name }}"
+      type: ingress
+      defaultBackend: null
+      rules:
+        - host: null
+          paths:
+            /:
+              targetPort: 80
+              workloadIds:
+                - deployment:cloudman:cloudman-cloudman-api
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+    status_code: 201
+  when: cm_ingress.json.data | length == 0
+
 - name: Make sure kube conf dir exist
   file:
     path: "{{ kube_dir }}"

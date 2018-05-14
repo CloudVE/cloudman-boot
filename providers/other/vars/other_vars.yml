@@ -13,4 +13,8 @@ kubectl_version: v1.5.4
 helm_version: v2.8.1
 
 cm_cluster_name: cloudman-cluster
+cm_namespace_name: cloudman
+cm_helm_app_name: cloudman-helm
+cm_ingress_name: cloudman-api-ingress
+cm_helm_version: 0.1.0
 kube_dir: /opt/kube
