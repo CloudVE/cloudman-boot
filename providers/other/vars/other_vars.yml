@@ -4,17 +4,11 @@ rancher_server: "{{ hostvars['rancher']['ansible_ssh_host'] }}"
 rancher_version: preview
 rancher_port: 4430
 rancher_port_80: 8080
-rancher_server_user: ubuntu
-rancher_agents_user: ubuntu
 rancher_admin: admin
-rancher_password: Something-To-Change
-
-kubectl_version: v1.5.4
-helm_version: v2.8.1
+rancher_password: "{{ lookup('env', 'CM_RANCHER_PWD')|default('Something-To-Change', true) }}"
 
 cm_cluster_name: cloudman-cluster
 cm_namespace_name: cloudman
 cm_helm_app_name: cloudman-helm
 cm_ingress_name: cloudman-api-ingress
 cm_helm_version: 0.1.0
-kube_dir: /opt/kube
