@@ -1,4 +1,7 @@
 ---
+
+- debug: msg="Using rancher pwd {{ rancher_password }}"
+
 - name: Pull and run the Rancher/server container
   docker_container:
       name: "{{ rancher_name }}"
@@ -96,7 +99,8 @@
     body_format: json
     body:
       name: server-url
-      value: "{{ public_ip }}"
+      type: setting
+      value: "https://{{ public_ip }}:{{ rancher_port }}"
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
@@ -153,13 +157,15 @@
     status_code: 201
   register: node_command
 
-- name: Edit node command
+- name: Extract node command
   set_fact:
-    node_command: "{{ node_command.json.nodeCommand | replace('--server  ', '--server https://' ~ public_ip ~ ':' ~ rancher_port ~ ' ') }}"
+    node_command: "{{ node_command.json.nodeCommand }}"
 
 - name: Remove sudo from the node command
   set_fact:
     node_command: "{{ node_command | replace('sudo ', '') }}"
+
+- debug: msg="Node cmd is {{ node_command }} {{ node_command }} {{ rancher_master_etcd }} {{ rancher_master_controlplane }} {{ rancher_master_as_worker }}"
 
 - name: Get current cluster status
   uri:
@@ -170,7 +176,7 @@
   register: cluster_state1
 
 - name: Add master as a node
-  command: "{{ node_command }} --etcd --controlplane --worker"
+  command: "{{ node_command }} {{ rancher_master_etcd }} {{ rancher_master_controlplane }} {{ rancher_master_as_worker }}"
   when: cluster_state1.json.state == "provisioning"
 
 - name: Wait for the cluster to become active
@@ -283,6 +289,7 @@
       answers:
         RANCHER_API_KEY: "{{ token }}"
         RANCHER_NODE_COMMAND: "{{ node_command }} --worker"
+        CM_BOOTSTRAP_DATA: "{{ cm_bootstrap_data|default('') }}"
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
@@ -319,9 +326,6 @@
     validate_certs: no
     status_code: 201
   when: cm_ingress.json.data | length == 0
-
-# Not yet working
-# - import_tasks: cloudman.yml
 
 - name: Print Rancher's URL
   debug:
