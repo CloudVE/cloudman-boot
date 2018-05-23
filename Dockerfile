@@ -18,4 +18,6 @@ WORKDIR /tmp/ansible
 ADD . /tmp/ansible
 # RUN curl -Lk https://github.com/afgane/ansible-rancher/archive/v2.0.0-alpha.tar.gz | tar -zxf-
 
-CMD ansible-playbook -i "localhost," -c local playbook.yml --tags rancher
+ENV ANSIBLE_DEBUG=${ANSIBLE_DEBUG:--v}
+CMD ansible-playbook -i "localhost," -c local playbook.yml --tags rancher \
+    $ANSIBLE_DEBUG
