@@ -1,3 +1,8 @@
+
+**The README is out of sync with the code sine adoption of Rancher 2 starting
+in April 2018 so don't rely on it for now.**
+
+
 # Rancher-Ansible
 
 This playbook will install Rancher platform (latest version) and register hosts automatically with Rancher, this playbook can be used to automatically create hosts on AWS using cloudformation or to install Rancher and register hosts on already created hosts using static inventory file.
