@@ -189,6 +189,27 @@
   retries: 100
   delay: 15
 
+- name: Add a persistent volume
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port}}/v3/clusters/{{ cluster_id }}/persistentvolume
+    method: POST
+    body_format: json
+    body:
+      type: persistentVolume
+      name: cloudman-volume
+      capacity:
+        storage: 10Gi
+      hostPath:
+        type: hostPathVolumeSource
+        path: /cloudman_volume
+        kind: DirectoryOrCreate
+      accessModes:
+        - ReadWriteOnce
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+    status_code: 201
+
 - name: Check if cloudman app is in the catalog already
   uri:
     url: https://{{ rancher_server }}:{{ rancher_port }}/v3/catalogs?name={{ cm_helm_app_name }}
@@ -205,7 +226,7 @@
       Authorization: Bearer {{ token }}
     validate_certs: no
 
-- name: Add CloudMan Helm repo to the catalog
+- name: Add custom Helm repos to the Rancher catalog
   uri:
     url: https://{{ rancher_server }}:{{ rancher_port }}/v3/catalog
     method: POST
@@ -213,14 +234,17 @@
     body:
       branch: master
       kind: helm
-      name: "{{ cm_helm_app_name }}"
+      name: "{{ item.app_name }}"
       type: catalog
-      url: https://github.com/CloudVE/cloudman-helm.git
+      url: "{{ item.app_url }}"
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
     status_code: 201
   when: cm_helm_app.json.data | length == 0
+  with_items:
+    - { app_name: "{{ cm_helm_app_name }}", app_url: 'https://github.com/CloudVE/cloudman-helm.git' }
+    - { app_name: galaxy-helm, app_url: 'https://github.com/galaxyproject/galaxy-kubernetes.git' }
 
 - name: Get project info
   uri:
