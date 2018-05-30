@@ -296,37 +296,6 @@
     status_code: 201
   when: cm_app.json.data | length == 0
 
-- name: Check if CloudMan ingress exists
-  uri:
-    url: https://{{ public_ip }}:{{ rancher_port }}/v3/project/{{ project_id }}/ingresses?name={{ cm_ingress_name }}
-    headers:
-      Authorization: Bearer {{ token }}
-    validate_certs: no
-  register: cm_ingress
-
-- name: Add CloudMan ingress
-  uri:
-    url: https://{{ public_ip }}:{{ rancher_port }}/v3/projects/{{ project_id }}/ingress
-    method: POST
-    body_format: json
-    body:
-      name: "{{ cm_ingress_name }}"
-      namespaceId: "{{ cm_namespace_name }}"
-      type: ingress
-      defaultBackend: null
-      rules:
-        - host: null
-          paths:
-            /:
-              targetPort: 80
-              workloadIds:
-                - deployment:cloudman:cloudman-cloudman-api
-    headers:
-      Authorization: Bearer {{ token }}
-    validate_certs: no
-    status_code: 201
-  when: cm_ingress.json.data | length == 0
-
 - name: Print Rancher's URL
   debug:
     msg: "You can connect to rancher server https://{{ public_ip }}:{{ rancher_port }}"
