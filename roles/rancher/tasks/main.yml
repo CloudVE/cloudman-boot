@@ -1,5 +1,4 @@
 ---
-
 - debug: msg="Using rancher pwd {{ rancher_password }}"
 
 - name: Pull and run the Rancher/server container
@@ -11,19 +10,11 @@
         - "{{ rancher_port_80}}:80"
         - "{{ rancher_port }}:443"
 
-- name: Get the host public IP address
-  uri:
-    url: https://ipinfo.io/ip
-    return_content: yes
-  register: p_ip
-
-- name: Set public IP variable
-  set_fact:
-    public_ip: "{{ p_ip.content | trim }}"
+- debug: msg="Using rancher_server address {{ rancher_server }}"
 
 - name: Setup login
   uri:
-    url: "https://{{ public_ip }}:{{ rancher_port }}/v3-public/localProviders/local?action=login"
+    url: "https://{{ rancher_server }}:{{ rancher_port }}/v3-public/localProviders/local?action=login"
     method: POST
     body_format: json
     body:
@@ -46,7 +37,7 @@
 
 - name: Re-setup login
   uri:
-    url: "https://{{ public_ip }}:{{ rancher_port }}/v3-public/localProviders/local?action=login"
+    url: "https://{{ rancher_server }}:{{ rancher_port }}/v3-public/localProviders/local?action=login"
     method: POST
     body_format: json
     body:
@@ -66,7 +57,7 @@
 
 - name: Change password
   uri:
-    url: https://{{ public_ip }}:{{ rancher_port }}/v3/users?action=changepassword
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/users?action=changepassword
     method: POST
     body_format: json
     body:
@@ -79,7 +70,7 @@
 # Not used but left in case we need it one day
 # - name: Create an API key
 #   uri:
-#     url: https://{{ public_ip }}:{{ rancher_port }}/v3/token
+#     url: https://{{ rancher_server }}:{{ rancher_port }}/v3/token
 #     method: POST
 #     body_format: json
 #     body:
@@ -94,20 +85,20 @@
 
 - name: Configure server URL
   uri:
-    url: https://{{ public_ip }}:{{ rancher_port }}/v3/settings/server-url
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/settings/server-url
     method: PUT
     body_format: json
     body:
       name: server-url
       type: setting
-      value: "https://{{ public_ip }}:{{ rancher_port }}"
+      value: "https://{{ rancher_server }}:{{ rancher_port }}"
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
 
 - name: Check if cluster already exists
   uri:
-    url: https://{{ public_ip }}:{{ rancher_port }}/v3/clusters?name={{ cm_cluster_name }}
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/clusters?name={{ cm_cluster_name }}
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
@@ -120,13 +111,13 @@
 
 - name: Create a cluster
   uri:
-    url: https://{{ public_ip }}:{{ rancher_port }}/v3/cluster
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/cluster
     method: POST
     body_format: json
     body:
       type: cluster
       rancherKubernetesEngineConfig:
-        ignoreDockerVersion: false
+        ignoreDockerVersion: true
         ingress:
           provider: nginx
           type: ingressConfig
@@ -145,7 +136,7 @@
 
 - name: Generate cluster registration token and extract node command
   uri:
-    url: https://{{ public_ip }}:{{ rancher_port }}/v3/clusterregistrationtoken
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/clusterregistrationtoken
     method: POST
     body_format: json
     body:
@@ -169,7 +160,7 @@
 
 - name: Get current cluster status
   uri:
-    url: https://{{ public_ip }}:{{ rancher_port }}/v3/clusters/{{ cluster_id }}
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/clusters/{{ cluster_id }}
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
@@ -181,7 +172,7 @@
 
 - name: Wait for the cluster to become active
   uri:
-    url: https://{{ public_ip }}:{{ rancher_port }}/v3/clusters/{{ cluster_id }}
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/clusters/{{ cluster_id }}
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
@@ -189,7 +180,7 @@
 
 - name: Wait for the cluster to become active
   uri:
-    url: https://{{ public_ip }}:{{ rancher_port }}/v3/clusters/{{ cluster_id }}
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/clusters/{{ cluster_id }}
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
@@ -200,7 +191,7 @@
 
 - name: Check if cloudman app is in the catalog already
   uri:
-    url: https://{{ public_ip }}:{{ rancher_port }}/v3/catalogs?name={{ cm_helm_app_name }}
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/catalogs?name={{ cm_helm_app_name }}
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
@@ -208,7 +199,7 @@
 
 - name: Disable the default library catalog
   uri:
-    url: https://{{ public_ip }}:{{ rancher_port }}/v3/catalogs/library
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/catalogs/library
     method: DELETE
     headers:
       Authorization: Bearer {{ token }}
@@ -216,7 +207,7 @@
 
 - name: Add CloudMan Helm repo to the catalog
   uri:
-    url: https://{{ public_ip }}:{{ rancher_port }}/v3/catalog
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/catalog
     method: POST
     body_format: json
     body:
@@ -233,7 +224,7 @@
 
 - name: Get project info
   uri:
-    url: https://{{ public_ip }}:{{ rancher_port }}/v3/projects?clusterId={{ cluster_id }}
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/projects?clusterId={{ cluster_id }}
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
@@ -245,7 +236,7 @@
 
 - name: Check if namespace already exists
   uri:
-    url: https://{{ public_ip }}:{{ rancher_port }}/v3/cluster/{{ cluster_id }}/namespaces?name={{ cm_namespace_name }}
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/cluster/{{ cluster_id }}/namespaces?name={{ cm_namespace_name }}
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
@@ -253,7 +244,7 @@
 
 - name: Add CloudMan namespace
   uri:
-    url: https://{{ public_ip }}:{{ rancher_port }}/v3/clusters/{{ cluster_id }}/namespace
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/clusters/{{ cluster_id }}/namespace
     method: POST
     body_format: json
     body:
@@ -268,7 +259,7 @@
 
 - name: Check if CloudMan app has been added
   uri:
-    url: https://{{ public_ip }}:{{ rancher_port }}/v3/project/{{ project_id }}/apps?name=cloudman
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/project/{{ project_id }}/apps?name=cloudman
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
@@ -276,7 +267,7 @@
 
 - name: Launch CloudMan app
   uri:
-    url: https://{{ public_ip }}:{{ rancher_port }}/v3/projects/{{ project_id }}/app
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/projects/{{ project_id }}/app
     method: POST
     body_format: json
     body:
@@ -298,4 +289,4 @@
 
 - name: Print Rancher's URL
   debug:
-    msg: "You can connect to rancher server https://{{ public_ip }}:{{ rancher_port }}"
+    msg: "You can connect to rancher server https://{{ rancher_server }}:{{ rancher_port }}"
