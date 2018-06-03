@@ -189,26 +189,30 @@
   retries: 100
   delay: 15
 
-- name: Add a persistent volume
-  uri:
-    url: https://{{ rancher_server }}:{{ rancher_port}}/v3/clusters/{{ cluster_id }}/persistentvolume
-    method: POST
-    body_format: json
-    body:
-      type: persistentVolume
-      name: cloudman-volume
-      capacity:
-        storage: 10Gi
-      hostPath:
-        type: hostPathVolumeSource
-        path: /cloudman_volume
-        kind: DirectoryOrCreate
-      accessModes:
-        - ReadWriteOnce
-    headers:
-      Authorization: Bearer {{ token }}
-    validate_certs: no
-    status_code: 201
+# StorageClass define below takes care of this now
+# - name: Add persistent volumes
+#   uri:
+#     url: https://{{ rancher_server }}:{{ rancher_port}}/v3/clusters/{{ cluster_id }}/persistentvolume
+#     method: POST
+#     body_format: json
+#     body:
+#       type: persistentVolume
+#       name: "{{ item.name }}"
+#       capacity:
+#         storage: "{{ item.capacity }}"
+#       hostPath:
+#         type: hostPathVolumeSource
+#         path: "{{ item.path }}"
+#         kind: "{{ item.kind }}"
+#       accessModes: "{{ item.accessModes }}"
+#     headers:
+#       Authorization: Bearer {{ token }}
+#     validate_certs: no
+#     status_code: 201
+#   with_items:
+#     - {'name': 'psql-volume', 'capacity': '10Gi', 'path': '/psql_volume', 'kind': 'DirectoryOrCreate', 'accessModes': ['ReadWriteOnce']}
+#     - {'name': 'galaxy-volume', 'capacity': '20Gi', 'path': '/galaxy_volume', 'kind': 'DirectoryOrCreate', 'accessModes': ['ReadWriteMany']}
+#   ignore_errors: true
 
 - name: Check if cloudman app is in the catalog already
   uri:
@@ -217,14 +221,6 @@
       Authorization: Bearer {{ token }}
     validate_certs: no
   register: cm_helm_app
-
-- name: Disable the default library catalog
-  uri:
-    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/catalogs/library
-    method: DELETE
-    headers:
-      Authorization: Bearer {{ token }}
-    validate_certs: no
 
 - name: Add custom Helm repos to the Rancher catalog
   uri:
@@ -281,6 +277,39 @@
     status_code: 201
   when: cm_ns.json.data | length == 0
 
+- name: Check if nfs-provisioner app has been added
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/project/{{ project_id }}/apps?name=nfs-provisioner
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+  register: nfs_app
+
+- name: Add nfs-provisioner app
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/projects/{{ project_id }}/app
+    method: POST
+    body_format: json
+    body:
+      name: nfs-provisioner
+      targetNamespace: "{{ cm_namespace_name }}"
+      type: app
+      prune: false
+      projectId: "{{ project_id }}"
+      externalId: "catalog://?catalog=library&template=nfs-provisioner&version=0.1.0"
+      answers:
+        defaultImage: "true"
+        image.repository: "quay.io/kubernetes_incubator/nfs-provisioner"
+        image.tag: "v1.0.8"
+        nfs.hostPort: "2049"
+        persistence.defaultClass: "true"
+        persistence.hostPath: "/srv"
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+    status_code: 201
+  when: nfs_app.json.data | length == 0
+
 - name: Check if CloudMan app has been added
   uri:
     url: https://{{ rancher_server }}:{{ rancher_port }}/v3/project/{{ project_id }}/apps?name=cloudman
@@ -310,6 +339,14 @@
     validate_certs: no
     status_code: 201
   when: cm_app.json.data | length == 0
+
+- name: Disable the default library catalog
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/catalogs/library
+    method: DELETE
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
 
 - name: Print Rancher's URL
   debug:
