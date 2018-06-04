@@ -189,7 +189,7 @@
   retries: 100
   delay: 15
 
-# StorageClass define below takes care of this now
+# # StorageClass define below takes care of this now
 # - name: Add persistent volumes
 #   uri:
 #     url: https://{{ rancher_server }}:{{ rancher_port}}/v3/clusters/{{ cluster_id }}/persistentvolume
@@ -241,6 +241,8 @@
   with_items:
     - { app_name: "{{ cm_helm_app_name }}", app_url: 'https://github.com/CloudVE/cloudman-helm.git' }
     - { app_name: galaxy-helm, app_url: 'https://github.com/galaxyproject/galaxy-kubernetes.git' }
+  loop_control:  # Rancher's concurrency here does not keep up without sleep
+    pause: 1
 
 - name: Get project info
   uri:
