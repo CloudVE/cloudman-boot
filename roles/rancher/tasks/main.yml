@@ -228,7 +228,7 @@
     method: POST
     body_format: json
     body:
-      branch: master
+      branch: "{{ item.branch }}"
       kind: helm
       name: "{{ item.app_name }}"
       type: catalog
@@ -239,8 +239,8 @@
     status_code: 201
   when: cm_helm_app.json.data | length == 0
   with_items:
-    - { app_name: "{{ cm_helm_app_name }}", app_url: 'https://github.com/CloudVE/cloudman-helm.git' }
-    - { app_name: galaxy-helm, app_url: 'https://github.com/galaxyproject/galaxy-kubernetes.git' }
+    - { app_name: "{{ cm_helm_app_name }}", app_url: 'https://github.com/CloudVE/cloudman-helm.git', branch: 'master' }
+    - { app_name: galaxy-helm, app_url: 'https://github.com/galaxyproject/galaxy-kubernetes.git', branch: 'develop' }
   loop_control:  # Rancher's concurrency here does not keep up without sleep
     pause: 1
 
