@@ -333,6 +333,7 @@
       projectId: "{{ project_id }}"
       externalId: "catalog://?catalog={{ cm_catalog_name }}&template=cloudman&version={{ cm_helm_version }}"
       answers:
+        RANCHER_URL: "https://{{ rancher_server }}:{{ rancher_port }}"
         RANCHER_API_KEY: "{{ token }}"
         RANCHER_NODE_COMMAND: "{{ node_command }} --worker"
         CM_BOOTSTRAP_DATA: "{{ cm_bootstrap_data|default('') }}"
