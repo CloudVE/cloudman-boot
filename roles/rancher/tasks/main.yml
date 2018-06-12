@@ -252,14 +252,6 @@
     validate_certs: no
   register: project
 
-- name: Get kube manifest
-  uri:
-    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/cluster/{{ cluster_id }}?action=generateKubeconfig
-    headers:
-      Authorization: Bearer {{ token }}
-    validate_certs: no
-  register: project
-
 - name: Set project id
   set_fact:
     project_id: "{{ project.json.data[0].id }}"
