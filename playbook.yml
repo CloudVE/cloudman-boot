@@ -1,20 +1,3 @@
----
-- name: Installing and configuring Docker
-  hosts: all
-  become: yes
-  vars_files:
-    - providers/other/vars/other_vars.yml
-  vars:
-    # - ansible_python_interpreter: "/usr/bin/env python"
-    - ansible_python_interpreter: /usr/bin/python3
-  pre_tasks:
-    # Amazon Linux reports 'Amazon' as the disribution, making yum repo links
-    # not work so set our own default
-    - set_fact: ansible_distribution=CentOS
-      when: ansible_distribution == "Amazon"
-  roles:
-    - { role: docker, tags: ["docker"] }
-
 - name: Setting up Rancher Server
   # hosts: "Rancher"
   hosts: all
@@ -29,12 +12,3 @@
   roles:
     - { role: rancher, tags: ["rancher"] }
 
-- name: Register Rancher Hosts
-  hosts: "Agents"
-  become: yes
-  vars_files:
-    - providers/other/vars/other_vars.yml
-  vars:
-    - ansible_python_interpreter: "/usr/bin/env python"
-  roles:
-    - { role: rancher_reg, tags: ["rancher_reg"] }
