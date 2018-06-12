@@ -252,6 +252,14 @@
     validate_certs: no
   register: project
 
+- name: Get kube manifest
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/cluster/{{ cluster_id }}?action=generateKubeconfig
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+  register: project
+
 - name: Set project id
   set_fact:
     project_id: "{{ project.json.data[0].id }}"
@@ -279,38 +287,38 @@
     status_code: 201
   when: cm_ns.json.data | length == 0
 
-- name: Check if nfs-provisioner app has been added
-  uri:
-    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/project/{{ project_id }}/apps?name=nfs-provisioner
-    headers:
-      Authorization: Bearer {{ token }}
-    validate_certs: no
-  register: nfs_app
+# - name: Check if nfs-provisioner app has been added
+#   uri:
+#     url: https://{{ rancher_server }}:{{ rancher_port }}/v3/project/{{ project_id }}/apps?name=nfs-provisioner
+#     headers:
+#       Authorization: Bearer {{ token }}
+#     validate_certs: no
+#   register: nfs_app
 
-- name: Add nfs-provisioner app
-  uri:
-    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/projects/{{ project_id }}/app
-    method: POST
-    body_format: json
-    body:
-      name: nfs-provisioner
-      targetNamespace: "{{ cm_namespace_name }}"
-      type: app
-      prune: false
-      projectId: "{{ project_id }}"
-      externalId: "catalog://?catalog=library&template=nfs-provisioner&version=0.1.0"
-      answers:
-        defaultImage: "true"
-        image.repository: "quay.io/kubernetes_incubator/nfs-provisioner"
-        image.tag: "v1.0.8"
-        nfs.hostPort: "2049"
-        persistence.defaultClass: "true"
-        persistence.hostPath: "/srv"
-    headers:
-      Authorization: Bearer {{ token }}
-    validate_certs: no
-    status_code: 201
-  when: nfs_app.json.data | length == 0
+# - name: Add nfs-provisioner app
+#   uri:
+#     url: https://{{ rancher_server }}:{{ rancher_port }}/v3/projects/{{ project_id }}/app
+#     method: POST
+#     body_format: json
+#     body:
+#       name: nfs-provisioner
+#       targetNamespace: "{{ cm_namespace_name }}"
+#       type: app
+#       prune: false
+#       projectId: "{{ project_id }}"
+#       externalId: "catalog://?catalog=library&template=nfs-provisioner&version=0.1.0"
+#       answers:
+#         defaultImage: "true"
+#         image.repository: "quay.io/kubernetes_incubator/nfs-provisioner"
+#         image.tag: "v1.0.8"
+#         nfs.hostPort: "2049"
+#         persistence.defaultClass: "true"
+#         persistence.hostPath: "/srv"
+#     headers:
+#       Authorization: Bearer {{ token }}
+#     validate_certs: no
+#     status_code: 201
+#   when: nfs_app.json.data | length == 0
 
 - name: Check if CloudMan app has been added
   uri:
@@ -335,6 +343,8 @@
       answers:
         RANCHER_URL: "https://{{ rancher_server }}:{{ rancher_port }}"
         RANCHER_API_KEY: "{{ token }}"
+        RANCHER_CLUSTER_ID: "{{ cluster_id }}"
+        RANCHER_PROJECT_ID: "{{ project_id }}"
         RANCHER_NODE_COMMAND: "{{ node_command }} --worker"
         CM_BOOTSTRAP_DATA: "{{ cm_bootstrap_data|default('') }}"
     headers:
@@ -343,59 +353,59 @@
     status_code: 201
   when: cm_app.json.data | length == 0
 
-- name: Check if Galaxy namespace already exists
-  uri:
-    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/cluster/{{ cluster_id }}/namespaces?name={{ galaxy_namespace_name }}
-    headers:
-      Authorization: Bearer {{ token }}
-    validate_certs: no
-  register: gxy_ns
+# - name: Check if Galaxy namespace already exists
+#   uri:
+#     url: https://{{ rancher_server }}:{{ rancher_port }}/v3/cluster/{{ cluster_id }}/namespaces?name={{ galaxy_namespace_name }}
+#     headers:
+#       Authorization: Bearer {{ token }}
+#     validate_certs: no
+#   register: gxy_ns
 
-- name: Add Galaxy namespace
-  uri:
-    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/clusters/{{ cluster_id }}/namespace
-    method: POST
-    body_format: json
-    body:
-      name: "{{ galaxy_namespace_name }}"
-      type: namespace
-      projectId: "{{ project_id }}"
-    headers:
-      Authorization: Bearer {{ token }}
-    validate_certs: no
-    status_code: 201
-  when: gxy_ns.json.data | length == 0
+# - name: Add Galaxy namespace
+#   uri:
+#     url: https://{{ rancher_server }}:{{ rancher_port }}/v3/clusters/{{ cluster_id }}/namespace
+#     method: POST
+#     body_format: json
+#     body:
+#       name: "{{ galaxy_namespace_name }}"
+#       type: namespace
+#       projectId: "{{ project_id }}"
+#     headers:
+#       Authorization: Bearer {{ token }}
+#     validate_certs: no
+#     status_code: 201
+#   when: gxy_ns.json.data | length == 0
 
-- name: Check if Galaxy app has been added
-  uri:
-    url: "https://{{ rancher_server }}:{{ rancher_port }}/v3/project/{{ project_id }}/apps?name={{ galaxy_chart_name }}"
-    headers:
-      Authorization: Bearer {{ token }}
-    validate_certs: no
-  register: gxy_app
+# - name: Check if Galaxy app has been added
+#   uri:
+#     url: "https://{{ rancher_server }}:{{ rancher_port }}/v3/project/{{ project_id }}/apps?name={{ galaxy_chart_name }}"
+#     headers:
+#       Authorization: Bearer {{ token }}
+#     validate_certs: no
+#   register: gxy_app
 
-- name: Launch Galaxy app
-  uri:
-    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/projects/{{ project_id }}/app
-    method: POST
-    body_format: json
-    body:
-      name: galaxy
-      targetNamespace: "{{ galaxy_namespace_name }}"
-      type: app
-      prune: false
-      projectId: "{{ project_id }}"
-      externalId: "catalog://?catalog={{ galaxy_catalog_name }}&template={{ galaxy_chart_name }}&version={{ galaxy_helm_version }}"
-      answers:
-        admin.email: "admin@galaxyproject.org"
-        admin.password: "{{ rancher_password }}"
-        admin.username: "admin"
-        ingress.path: "/galaxy"
-    headers:
-      Authorization: Bearer {{ token }}
-    validate_certs: no
-    status_code: 201
-  when: gxy_app.json.data | length == 0
+# - name: Launch Galaxy app
+#   uri:
+#     url: https://{{ rancher_server }}:{{ rancher_port }}/v3/projects/{{ project_id }}/app
+#     method: POST
+#     body_format: json
+#     body:
+#       name: galaxy
+#       targetNamespace: "{{ galaxy_namespace_name }}"
+#       type: app
+#       prune: false
+#       projectId: "{{ project_id }}"
+#       externalId: "catalog://?catalog={{ galaxy_catalog_name }}&template={{ galaxy_chart_name }}&version={{ galaxy_helm_version }}"
+#       answers:
+#         admin.email: "admin@galaxyproject.org"
+#         admin.password: "{{ rancher_password }}"
+#         admin.username: "admin"
+#         ingress.path: "/galaxy"
+#     headers:
+#       Authorization: Bearer {{ token }}
+#     validate_certs: no
+#     status_code: 201
+#   when: gxy_app.json.data | length == 0
 
 # - name: Disable the default library catalog
 #   uri:

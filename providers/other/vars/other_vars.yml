@@ -21,6 +21,6 @@ cm_ingress_name: cloudman-api-ingress
 cm_helm_version: 0.1.0
 
 galaxy_namespace_name: galaxy-ns
-galaxy_catalog_name: galaxy-helm
+galaxy_catalog_name: galaxyproject
 galaxy_chart_name: galaxy-stable
 galaxy_helm_version: 2.0.0
