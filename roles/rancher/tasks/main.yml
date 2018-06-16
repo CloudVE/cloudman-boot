@@ -337,7 +337,9 @@
         cloudlaunch.cloudlaunch-server.extra_env.rancher_project_id: "{{ project_id }}"
         cloudlaunch.cloudlaunch-server.extra_env.rancher_node_command: "{{ node_command }} --worker"
         cloudlaunch.cloudlaunch-server.extra_env.cm_bootstrap_data: "{{ cm_bootstrap_data|default('') }}"
+        cloudlaunch.cloudlaunch-server.extra_env.domain_name: "{{ rancher_server }}"
         cloudlaunch.cloudlaunch-server.admin_password: "{{ rancher_password }}"
+        keycloak.keycloak.password: "{{ rancher_password }}"
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
