@@ -217,7 +217,8 @@
     validate_certs: no
     status_code: 201
   with_items:
-    - {'name': 'cm-volume', 'capacity': '10Gi', 'path': '/psql_volume', 'kind': 'DirectoryOrCreate', 'accessModes': ['ReadWriteOnce', 'ReadWriteMany']}
+    - {'name': 'cm-volume', 'capacity': '10Gi', 'path': '/cloudman/postgres_vol', 'kind': 'DirectoryOrCreate', 'accessModes': ['ReadWriteOnce', 'ReadWriteMany']}
+    - {'name': 'cm-prometheus-volume', 'capacity': '10Gi', 'path': '/cloudman/prometheus_vol', 'kind': 'DirectoryOrCreate', 'accessModes': ['ReadWriteOnce', 'ReadWriteMany']}
 #     - {'name': 'galaxy-volume', 'capacity': '20Gi', 'path': '/galaxy_volume', 'kind': 'DirectoryOrCreate', 'accessModes': ['ReadWriteMany']}
   ignore_errors: true
 
@@ -426,14 +427,14 @@
     svc_access_line: "Login to any of these services as user 'admin', using the password you supplied."
   when: using_random_pwd is not defined
 
-- name: Wait on CloudMan login to become accessible
+- name: Wait for CloudMan login to become accessible
   uri:
     url: "https://{{ rancher_server }}/cloudman/openid/openid/KeyCloak"
     method: GET
     validate_certs: no
   register: cm_available
   until: cm_available['status']|default(0) == 200
-  retries: 30
+  retries: 40
   delay: 10
 
 - name: System help info
