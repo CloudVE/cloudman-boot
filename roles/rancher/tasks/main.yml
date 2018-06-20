@@ -1,5 +1,13 @@
 ---
-- debug: msg="Using rancher pwd {{ rancher_password }}"
+- name: Decide on password
+  set_fact:
+    rancher_password: "{{ random_pwd }}"
+    using_random_pwd: true
+  when: rancher_password == ''
+
+- debug:
+    msg: "Using rancher pwd {{ rancher_password }}"
+    verbosity: 2
 
 - name: Pull and run the Rancher/server container
   docker_container:
@@ -406,6 +414,36 @@
 #       Authorization: Bearer {{ token }}
 #     validate_certs: no
 
-- name: Print Rancher's URL
+- name: Compose random pwd access doc
+  set_fact:
+    svc_access_line: "Login to any of these services as user 'admin', using password '{{ rancher_password }}'"
+  when: using_random_pwd is defined and using_random_pwd
+
+- name: Compose supplied pwd access doc
+  set_fact:
+    svc_access_line: "Login to any of these services as user 'admin', using the password you supplied."
+  when: using_random_pwd is not defined
+
+- name: Wait on CloudMan login to become accessible
+  uri:
+    url: "https://{{ rancher_server }}/cloudman/openid/openid/KeyCloak"
+    method: GET
+    validate_certs: no
+  register: cm_available
+  until: cm_available['status']|default(0) == 200
+  retries: 30
+  delay: 10
+
+- name: System help info
   debug:
-    msg: "You can connect to rancher server https://{{ rancher_server }}:{{ rancher_port }}"
+    msg:
+      - "The system has now been setup. Access CloudMan at https://{{ rancher_server }}/"
+      - ""
+      - "There are also these additional services available:"
+      - "  Rancher: https://{{ rancher_server }}:{{ rancher_port }}/"
+      - "  Keycloak: https://{{ rancher_server }}/auth/"
+      - ""
+      - "{{ svc_access_line }}"
+      - ""
+      - "For documentation and information about these services, see http://cloudve.org/"
+...

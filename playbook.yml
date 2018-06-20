@@ -1,8 +1,10 @@
-- name: Setting up Rancher Server
+- name: Setup Rancher Server with CloudMan
   # hosts: "Rancher"
   hosts: all
   vars_files:
     - providers/other/vars/other_vars.yml
+  vars:
+    random_pwd: "{{ lookup('password', '/dev/null length=12 chars=ascii_letters,digits') }}"
   environment:
     PATH: "{{ ansible_env.PATH }}:/usr/local/bin"
   become: yes

@@ -5,7 +5,7 @@ rancher_version: latest
 rancher_port: 4430
 rancher_port_80: 8080
 rancher_admin: admin
-rancher_password: "{{ lookup('env', 'RANCHER_PWD')|default('Something-To-Change', true) }}"
+rancher_password: "{{ lookup('env', 'RANCHER_PWD') }}"
 
 # The following variables define roles the master node will take. Values must
 # be either `--etcd`, `--controlplane`, and `--worker` for respective variable
