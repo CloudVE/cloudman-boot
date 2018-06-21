@@ -310,16 +310,20 @@
   shell: /usr/local/bin/kubectl create serviceaccount --namespace kube-system tiller && /usr/local/bin/kubectl create clusterrolebinding tiller-cluster-rule --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
 
 - name: Init Helm
-  shell: /bin/helm init --service-account tiller
+  shell: /usr/local/bin/helm init --service-account tiller
 
-- pause:  # Wait for tiller pod to start
-    seconds: 30
+- name: Wait for tiller pod to start
+  command: helm list
+  retries: 10
+  delay: 5
+  register: result
+  until: result.rc == 0
 
 - name: Add CloudVE Helm repo
-  shell: /bin/helm repo add galaxyproject https://raw.githubusercontent.com/CloudVE/helm-charts/master/
+  shell: /usr/local/bin/helm repo add galaxyproject https://raw.githubusercontent.com/CloudVE/helm-charts/master/
 
 - name: Update Helm repos
-  shell: /bin/helm repo update
+  shell: /usr/local/bin/helm repo update
 
 # Persistent Volumes are being added instead above
 # - name: Check if nfs-provisioner app has been added
@@ -357,7 +361,7 @@
 
 - name: Helm install CloudMan
   shell: >
-    /bin/helm install galaxyproject/cloudman --namespace {{ cm_namespace_name }} --version {{ cm_helm_version }}
+    /usr/local/bin/helm install galaxyproject/cloudman --namespace {{ cm_namespace_name }} --version {{ cm_helm_version }}
     --set 'cloudlaunch.cloudlaunch-server.extra_env.rancher_url="https://{{ rancher_server }}:{{ rancher_port }}",
     cloudlaunch.cloudlaunch-server.extra_env.rancher_api_key="{{ token }}",
     cloudlaunch.cloudlaunch-server.extra_env.rancher_cluster_id="{{ cluster_id }}",
