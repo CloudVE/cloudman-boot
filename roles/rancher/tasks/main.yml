@@ -310,16 +310,20 @@
   shell: /usr/local/bin/kubectl create serviceaccount --namespace kube-system tiller && /usr/local/bin/kubectl create clusterrolebinding tiller-cluster-rule --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
 
 - name: Init Helm
-  shell: /bin/helm init --service-account tiller
+  shell: /usr/local/bin/helm init --service-account tiller
 
-- pause:  # Wait for tiller pod to start
-    seconds: 30
+- name: Wait for tiller...
+  command: /usr/local/bin/helm list
+  register: tiller_ready
+  until: tiller_ready.rc == 0
+  retries: 30
+  delay: 2
 
 - name: Add CloudVE Helm repo
-  shell: /bin/helm repo add galaxyproject https://raw.githubusercontent.com/CloudVE/helm-charts/master/
+  shell: /usr/local/bin/helm repo add galaxyproject https://raw.githubusercontent.com/CloudVE/helm-charts/master/
 
 - name: Update Helm repos
-  shell: /bin/helm repo update
+  shell: /usr/local/bin/helm repo update
 
 # Persistent Volumes are being added instead above
 # - name: Check if nfs-provisioner app has been added
@@ -355,18 +359,17 @@
 #     status_code: 201
 #   when: nfs_app.json.data | length == 0
 
+- name: Place CloudMan chart custom values file
+  template:
+    src: cm_chart_values.yml.j2
+    dest: /tmp/cm_chart_values.yml
+
 - name: Helm install CloudMan
-  shell: >
-    /bin/helm install galaxyproject/cloudman --namespace {{ cm_namespace_name }} --version {{ cm_helm_version }}
-    --set 'cloudlaunch.cloudlaunch-server.extra_env.rancher_url="https://{{ rancher_server }}:{{ rancher_port }}",
-    cloudlaunch.cloudlaunch-server.extra_env.rancher_api_key="{{ token }}",
-    cloudlaunch.cloudlaunch-server.extra_env.rancher_cluster_id="{{ cluster_id }}",
-    cloudlaunch.cloudlaunch-server.extra_env.rancher_project_id="{{ project_id }}",
-    cloudlaunch.cloudlaunch-server.extra_env.rancher_node_command="{{ node_command }} --worker",
-    cloudlaunch.cloudlaunch-server.extra_env.cm_bootstrap_data="{{ cm_bootstrap_data|default('') }}",
-    cloudlaunch.cloudlaunch-server.admin_password="{{ rancher_password }}",
-    keycloak.keycloak.password="{{ rancher_password }}",
-    global.domain="{{ rancher_server }}"'
+  command: /usr/local/bin/helm install galaxyproject/cloudman --namespace {{ cm_namespace_name }} --version {{ cm_helm_version }} --values /tmp/cm_chart_values.yml
+  ignore_errors: true  # dev
+
+- pause:  # dev
+    minutes: 10
 
 # - helm:
 #     host: localhost
