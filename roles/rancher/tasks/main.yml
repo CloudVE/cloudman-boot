@@ -34,7 +34,7 @@
   ignore_errors: yes
   register: login_response
   until: login_response['status'] | default(0) == 201
-  retries: 6
+  retries: 5
   delay: 10
 
 - name: Set current admin password
@@ -194,7 +194,7 @@
     validate_certs: no
   register: cluster_state2
   until: '"active" in cluster_state2.json.state'
-  retries: 100
+  retries: 50
   delay: 15
 
 - name: Add persistent volumes
@@ -286,6 +286,21 @@
     status_code: 201
   when: cm_ns.json.data | length == 0
 
+- name: Add kube-system namespace to the Default project
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/cluster/{{ cluster_id }}/namespaces/kube-system
+    method: PUT
+    body_format: json
+    body:
+      baseType: namespace
+      id: kube-system
+      name: kube-system
+      projectId: "{{ project_id }}"
+      type: namespace
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+
 - name: Fetch kubectl config from Rancher
   uri:
     url: https://{{ rancher_server }}:{{ rancher_port }}/v3/clusters/{{ cluster_id }}?action=generateKubeconfig
@@ -312,7 +327,7 @@
 - name: Init Helm
   shell: /usr/local/bin/helm init --service-account tiller
 
-- name: Wait for tiller...
+- name: Wait for tiller pod to start...
   command: /usr/local/bin/helm list
   register: tiller_ready
   until: tiller_ready.rc == 0
