@@ -1,16 +1,24 @@
 FROM python:3.6-alpine
 
+ENV KUBE_LATEST_VERSION=v1.10.4
+ENV HELM_VERSION=v2.9.1
+ENV HELM_FILENAME=helm-${HELM_VERSION}-linux-amd64.tar.gz
+
 RUN echo "===> Add docker..."  && \
     apk --update --no-cache add docker && \
     echo "===> Add build dependencies..."  && \
-    apk add --no-cache --virtual build-deps libffi-dev openssl-dev build-base  && \
+    apk add --no-cache --virtual build-deps libffi-dev openssl-dev build-base && \
     ln -sf /usr/local/bin/python /usr/bin/python && \
     ln -sf /usr/local/bin/python /usr/bin/python3 && \
     \
     echo "===> Installing python packages..."  && \
     pip install --no-cache-dir ansible docker-py && \
     \
-    \
+    echo "==> Installing latest kubectl and helm..." && \
+    apk add --no-cache curl && \
+    curl -L https://storage.googleapis.com/kubernetes-release/release/${KUBE_LATEST_VERSION}/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl && \
+    curl -L https://storage.googleapis.com/kubernetes-helm/${HELM_FILENAME} | tar xz && mv linux-amd64/helm /bin/helm && rm -rf linux-amd64 && \
+    chmod +x /usr/local/bin/kubectl && \
     echo "===> Remove build dependencies..."  && \
     apk del build-deps
 
