@@ -374,17 +374,26 @@
 #     status_code: 201
 #   when: nfs_app.json.data | length == 0
 
-- name: Place CloudMan chart custom values file
-  template:
-    src: cm_chart_values.yml.j2
-    dest: /tmp/cm_chart_values.yml
+# - name: Place CloudMan chart custom values file
+#   template:
+#     src: cm_chart_values.yml.j2
+#     dest: /tmp/cm_chart_values.yml
 
 - name: Helm install CloudMan
-  command: /usr/local/bin/helm install galaxyproject/cloudman --namespace {{ cm_namespace_name }} --version {{ cm_helm_version }} --values /tmp/cm_chart_values.yml
-  ignore_errors: true  # dev
-
-- pause:  # dev
-    minutes: 10
+  command: >
+    /usr/local/bin/helm install galaxyproject/cloudman
+    --name "cloudman"
+    --namespace "{{ cm_namespace_name }}"
+    --version "{{ cm_helm_version }}"
+    --set "cloudlaunch.cloudlaunch-server.extra_env.rancher_url=https://{{ rancher_server }}:{{ rancher_port }}"
+    --set "cloudlaunch.cloudlaunch-server.extra_env.rancher_api_key={{ token }}"
+    --set "cloudlaunch.cloudlaunch-server.extra_env.rancher_cluster_id={{ cluster_id }}"
+    --set "cloudlaunch.cloudlaunch-server.extra_env.rancher_project_id={{ project_id }}"
+    --set "cloudlaunch.cloudlaunch-server.extra_env.rancher_node_command={{ node_command }} --worker"
+    --set "cloudlaunch.cloudlaunch-server.extra_env.cm_bootstrap_data={{ cm_bootstrap_data|default('') }}"
+    --set "cloudlaunch.cloudlaunch-server.admin_password={{ rancher_password }}"
+    --set "keycloak.keycloak.password={{ rancher_password }}"
+    --set "global.domain={{ rancher_server }}"
 
 # - helm:
 #     host: localhost
