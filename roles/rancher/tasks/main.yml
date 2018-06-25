@@ -394,6 +394,7 @@
     --set "cloudlaunch.cloudlaunch-server.admin_password={{ rancher_password }}"
     --set "keycloak.keycloak.password={{ rancher_password }}"
     --set "global.domain={{ rancher_server }}"
+  ignore_errors: true
 
 # - helm:
 #     host: localhost
