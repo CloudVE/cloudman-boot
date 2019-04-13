@@ -386,7 +386,6 @@
     --namespace "{{ cm_namespace_name }}"
     --version "{{ cm_helm_version }}"
     --set "cluster_type=KUBE_RANCHER"
-    --set "cm_initial_cloud_data={{ cm_initial_cloud_data|default('') }}"
     --set "cm_initial_cluster_data={{ cm_initial_cluster_data|default('') }}"
     --set "rancher_url=https://{{ rancher_server }}:{{ rancher_port }}"
     --set "rancher_api_key={{ token }}"
