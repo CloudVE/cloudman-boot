@@ -6,7 +6,8 @@ rancher_port: 4430
 rancher_port_80: 8080
 rancher_admin: admin
 rancher_password: "{{ lookup('env', 'RANCHER_PWD') }}"
-cm_bootstrap_data: "{{ lookup('env', 'CM_BOOTSTRAP_DATA') }}"
+cm_initial_cloud_data: "{{ lookup('env', 'CM_INITIAL_CLOUD_DATA') }}"
+cm_initial_cluster_data: "{{ lookup('env', 'CM_INITIAL_CLUSTER_DATA') }}"
 
 # The following variables define roles the master node will take. Values must
 # be either `--etcd`, `--controlplane`, and `--worker` for respective variable
