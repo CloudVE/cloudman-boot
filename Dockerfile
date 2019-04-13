@@ -1,6 +1,6 @@
 FROM python:3.6-alpine
 
-ENV KUBE_LATEST_VERSION=v1.10.4
+ENV KUBE_LATEST_VERSION=v1.14.1
 ENV HELM_VERSION=v2.9.1
 ENV HELM_FILENAME=helm-${HELM_VERSION}-linux-amd64.tar.gz
 
@@ -12,7 +12,8 @@ RUN echo "===> Add docker..."  && \
     ln -sf /usr/local/bin/python /usr/bin/python3 && \
     \
     echo "===> Installing python packages..."  && \
-    pip install --no-cache-dir ansible docker-py && \
+    pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir ansible docker-py  && \
     \
     echo "==> Installing latest kubectl and helm..." && \
     apk add --no-cache curl && \
@@ -26,7 +27,6 @@ RUN echo "===> Add docker..."  && \
 RUN mkdir -p /tmp/cm-boot
 WORKDIR /tmp/cm-boot
 ADD . /tmp/cm-boot
-# RUN curl -Lk https://github.com/afgane/ansible-rancher/archive/v2.0.0-alpha.tar.gz | tar -zxf-
 
 ENV ANSIBLE_DEBUG=${ANSIBLE_DEBUG:--v}
 CMD ansible-playbook -i "localhost," -c local playbook.yml --tags rancher \
