@@ -19,7 +19,7 @@ cm_cluster_name: cloudman-cluster
 cm_namespace_name: cloudman
 cm_catalog_name: cloudman-helm
 cm_ingress_name: cloudman-api-ingress
-cm_helm_version: 0.1.0
+cm_helm_version: 0.2.0
 
 galaxy_namespace_name: galaxy-ns
 galaxy_catalog_name: galaxyproject
