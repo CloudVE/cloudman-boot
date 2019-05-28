@@ -7,13 +7,13 @@ ENV HELM_FILENAME=helm-${HELM_VERSION}-linux-amd64.tar.gz
 RUN echo "===> Add docker..."  && \
     apk --update --no-cache add docker && \
     echo "===> Add build dependencies..."  && \
-    apk add --no-cache --virtual build-deps libffi-dev openssl-dev build-base && \
+    apk add --no-cache --virtual build-deps libffi-dev openssl-dev build-base linux-headers && \
     ln -sf /usr/local/bin/python /usr/bin/python && \
     ln -sf /usr/local/bin/python /usr/bin/python3 && \
     \
     echo "===> Installing python packages..."  && \
     pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir ansible docker-py  && \
+    pip install --no-cache-dir ansible docker-py cloudbridge && \
     \
     echo "==> Installing latest kubectl and helm..." && \
     apk add --no-cache curl && \

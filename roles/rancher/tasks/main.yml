@@ -135,12 +135,49 @@
     validate_certs: no
     status_code: 201
   register: cluster
-  when: clusters.json.data | length == 0
+  when: not cluster_id is defined and not kube_cloud_provider
+
+- name: Create a cluster
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/cluster
+    method: POST
+    body_format: json
+    body:
+      type: cluster
+      rancherKubernetesEngineConfig:
+        ignoreDockerVersion: true
+        ingress:
+          provider: nginx
+          type: ingressConfig
+        cloudProvider:
+          name: "{{ kube_cloud_provider }}"
+          customCloudProvider: |-
+            {{ kube_cloud_conf | b64decode }}
+      name: "{{ cm_cluster_name }}"
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+    status_code: 201
+  register: cluster
+  when: not cluster_id is defined and kube_cloud_provider
 
 - name: Store new cluster id
   set_fact:
     cluster_id: "{{ cluster.json.id }}"
   when: cluster is not skipped
+
+# Special handling for AWS
+# https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/aws#tagging-amazon-resources
+# There is a possible race condition here if the cluster initialization completes before the tag
+# is set, which seems unlikely. However, in such an event, we would have to decompose setting the
+# cloudProvider into two steps. First create the cluster without the cloudProvider configured,
+# then, obtain the cluster id and set the instance tag and finally update the cluster again with
+# the correct cloudProvider configured.
+- name: Set aws instance tag
+  script: set_aws_instance_tag.py {{ cluster_id }}
+  environment:
+    CM_INITIAL_CLUSTER_DATA: "{{ cm_initial_cluster_data }}"
+  when: kube_cloud_provider == "aws"
 
 - name: Generate cluster registration token and extract node command
   uri:

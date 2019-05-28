@@ -8,6 +8,12 @@ rancher_admin: admin
 rancher_password: "{{ lookup('env', 'RANCHER_PWD') }}"
 cm_initial_cluster_data: "{{ lookup('env', 'CM_INITIAL_CLUSTER_DATA') }}"
 
+# cloud provider for this cluster:
+# ref: https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/
+# ref: https://kubernetes.io/docs/concepts/cluster-administration/cloud-providers/
+kube_cloud_provider: "{{ lookup('env', 'KUBE_CLOUD_PROVIDER') }}"
+kube_cloud_conf: "{{ lookup('env', 'KUBE_CLOUD_CONF') }}"
+
 # The following variables define roles the master node will take. Values must
 # be either `--etcd`, `--controlplane`, and `--worker` for respective variable
 # or set to a blank value (i.e., ``)
