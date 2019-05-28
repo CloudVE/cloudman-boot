@@ -234,30 +234,80 @@
   retries: 50
   delay: 15
 
-- name: Add persistent volumes
+- name: Add provider block storage class
   uri:
-    url: https://{{ rancher_server }}:{{ rancher_port}}/v3/clusters/{{ cluster_id }}/persistentvolume
+    url: https://{{ rancher_server }}:{{ rancher_port}}/v3/clusters/{{ cluster_id }}/storageclass
     method: POST
     body_format: json
     body:
-      type: persistentVolume
-      name: "{{ item.name }}"
-      capacity:
-        storage: "{{ item.capacity }}"
-      hostPath:
-        type: hostPathVolumeSource
-        path: "{{ item.path }}"
-        kind: "{{ item.kind }}"
-      accessModes: "{{ item.accessModes }}"
+      type: "storageClass"
+      name: "provider-ebs"
+      reclaimPolicy: "Retain"
+      allowVolumeExpansion: true
+      provisioner: "kubernetes.io/aws-ebs"
+      parameters:
+        type: "gp2"
+        encrypted: "false"
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
     status_code: 201
-  with_items:
-    - {'name': 'cm-volume', 'capacity': '10Gi', 'path': '/cloudman/postgres_vol', 'kind': 'DirectoryOrCreate', 'accessModes': ['ReadWriteOnce', 'ReadWriteMany']}
-    - {'name': 'cm-prometheus-volume', 'capacity': '10Gi', 'path': '/cloudman/prometheus_vol', 'kind': 'DirectoryOrCreate', 'accessModes': ['ReadWriteOnce', 'ReadWriteMany']}
-#     - {'name': 'galaxy-volume', 'capacity': '20Gi', 'path': '/galaxy_volume', 'kind': 'DirectoryOrCreate', 'accessModes': ['ReadWriteMany']}
-  ignore_errors: true
+  when: kube_cloud_provider == "aws"
+
+- name: Add provider block storage class
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port}}/v3/clusters/{{ cluster_id }}/storageclass
+    method: POST
+    body_format: json
+    body:
+      type: "storageClass"
+      name: "provider-ebs"
+      reclaimPolicy: "Retain"
+      allowVolumeExpansion: true
+      provisioner: "kubernetes.io/azure-disk"
+      parameters:
+        kind: "shared"
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+    status_code: 201
+  when: kube_cloud_provider == "azure"
+
+- name: Add provider block storage class
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port}}/v3/clusters/{{ cluster_id }}/storageclass
+    method: POST
+    body_format: json
+    body:
+      type: "storageClass"
+      name: "provider-ebs"
+      reclaimPolicy: "Retain"
+      allowVolumeExpansion: true
+      provisioner: "kubernetes.io/gce-pd"
+      parameters:
+        type: "pd-ssd"
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+    status_code: 201
+  when: kube_cloud_provider == "gcp"
+
+- name: Add provider block storage class
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port}}/v3/clusters/{{ cluster_id }}/storageclass
+    method: POST
+    body_format: json
+    body:
+      type: "storageClass"
+      name: "provider-ebs"
+      reclaimPolicy: "Retain"
+      allowVolumeExpansion: true
+      provisioner: "kubernetes.io/cinder"
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+    status_code: 201
+  when: kube_cloud_provider == "openstack"
 
 - name: Check if cloudman app is in the catalog already
   uri:
@@ -378,38 +428,43 @@
   shell: /usr/local/bin/helm repo update
 
 # Persistent Volumes are being added instead above
-# - name: Check if nfs-provisioner app has been added
-#   uri:
-#     url: https://{{ rancher_server }}:{{ rancher_port }}/v3/project/{{ project_id }}/apps?name=nfs-provisioner
-#     headers:
-#       Authorization: Bearer {{ token }}
-#     validate_certs: no
-#   register: nfs_app
+- name: Check if nfs-provisioner app has been added
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/project/{{ project_id }}/apps?name=nfs-provisioner
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+  register: nfs_app
 
-# - name: Add nfs-provisioner app
-#   uri:
-#     url: https://{{ rancher_server }}:{{ rancher_port }}/v3/projects/{{ project_id }}/app
-#     method: POST
-#     body_format: json
-#     body:
-#       name: nfs-provisioner
-#       targetNamespace: "{{ cm_namespace_name }}"
-#       type: app
-#       prune: false
-#       projectId: "{{ project_id }}"
-#       externalId: "catalog://?catalog=library&template=nfs-provisioner&version=0.1.0"
-#       answers:
-#         defaultImage: "true"
-#         image.repository: "quay.io/kubernetes_incubator/nfs-provisioner"
-#         image.tag: "v1.0.8"
-#         nfs.hostPort: "2049"
-#         persistence.defaultClass: "true"
-#         persistence.hostPath: "/srv"
-#     headers:
-#       Authorization: Bearer {{ token }}
-#     validate_certs: no
-#     status_code: 201
-#   when: nfs_app.json.data | length == 0
+- name: Add nfs-provisioner app
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/projects/{{ project_id }}/app
+    method: POST
+    body_format: json
+    body:
+      name: "nfs-provisioner"
+      targetNamespace: "{{ cm_namespace_name }}"
+      type: "app"
+      prune: false
+      projectId: "{{ project_id }}"
+      externalId: "catalog://?catalog=library&template=nfs-provisioner&version=0.2.2"
+      answers:
+        defaultImage: "true"
+        image.repository: "quay.io/kubernetes_incubator/nfs-provisioner"
+        image.tag: "v1.0.9"
+        persistence.enabled: "true"
+        persistence.hostPath: "/nfs"
+        persistence.size: "{{ cm_initial_storage_size }}"
+        persistence.storageClass: "provider-ebs"
+        storageClass.allowVolumeExpansion: "true"
+        storageClass.create: "true"
+        storageClass.defaultClass: "true"
+        storageClass.reclaimPolicy: "Delete"
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+    status_code: 201
+  when: nfs_app.json.data | length == 0
 
 # - name: Place CloudMan chart custom values file
 #   template:
@@ -431,6 +486,8 @@
     --set "cloudlaunch.cloudlaunch-server.admin_password={{ rancher_password }}"
     --set "keycloak.keycloak.password={{ rancher_password }}"
     --set "global.domain={{ rancher_server }}"
+    --set "cloudlaunch.cloudlaunch-server.postgresql.persistence.storageClass=provider-ebs"
+    --set "prometheus.persistence.storageClass=nfs-provisioner"
   ignore_errors: true
 
 # - helm:

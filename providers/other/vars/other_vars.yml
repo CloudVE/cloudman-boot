@@ -7,6 +7,7 @@ rancher_port_80: 8080
 rancher_admin: admin
 rancher_password: "{{ lookup('env', 'RANCHER_PWD') }}"
 cm_initial_cluster_data: "{{ lookup('env', 'CM_INITIAL_CLUSTER_DATA') }}"
+cm_initial_storage_size: "{{ lookup('env', 'CM_INITIAL_STORAGE_SIZE')|default('100Gi', true) }}"
 
 # cloud provider for this cluster:
 # ref: https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/
