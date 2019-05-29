@@ -241,8 +241,8 @@
     body_format: json
     body:
       type: "storageClass"
-      name: "provider-ebs"
-      reclaimPolicy: "Retain"
+      name: "ebs-provisioner"
+      reclaimPolicy: "Delete"
       allowVolumeExpansion: true
       provisioner: "kubernetes.io/aws-ebs"
       parameters:
@@ -261,8 +261,8 @@
     body_format: json
     body:
       type: "storageClass"
-      name: "provider-ebs"
-      reclaimPolicy: "Retain"
+      name: "ebs-provisioner"
+      reclaimPolicy: "Delete"
       allowVolumeExpansion: true
       provisioner: "kubernetes.io/azure-disk"
       parameters:
@@ -280,8 +280,8 @@
     body_format: json
     body:
       type: "storageClass"
-      name: "provider-ebs"
-      reclaimPolicy: "Retain"
+      name: "ebs-provisioner"
+      reclaimPolicy: "Delete"
       allowVolumeExpansion: true
       provisioner: "kubernetes.io/gce-pd"
       parameters:
@@ -299,8 +299,8 @@
     body_format: json
     body:
       type: "storageClass"
-      name: "provider-ebs"
-      reclaimPolicy: "Retain"
+      name: "ebs-provisioner"
+      reclaimPolicy: "Delete"
       allowVolumeExpansion: true
       provisioner: "kubernetes.io/cinder"
     headers:
@@ -455,7 +455,7 @@
         persistence.enabled: "true"
         persistence.hostPath: "/nfs"
         persistence.size: "{{ cm_initial_storage_size }}"
-        persistence.storageClass: "provider-ebs"
+        persistence.storageClass: "ebs-provisioner"
         storageClass.allowVolumeExpansion: "true"
         storageClass.create: "true"
         storageClass.defaultClass: "true"
@@ -486,7 +486,7 @@
     --set "cloudlaunch.cloudlaunch-server.admin_password={{ rancher_password }}"
     --set "keycloak.keycloak.password={{ rancher_password }}"
     --set "global.domain={{ rancher_server }}"
-    --set "cloudlaunch.cloudlaunch-server.postgresql.persistence.storageClass=provider-ebs"
+    --set "cloudlaunch.cloudlaunch-server.postgresql.persistence.storageClass=ebs-provisioner"
     --set "prometheus.persistence.storageClass=nfs-provisioner"
   ignore_errors: true
 
