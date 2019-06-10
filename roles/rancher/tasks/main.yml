@@ -124,12 +124,28 @@
     body_format: json
     body:
       type: cluster
+      name: "{{ cm_cluster_name }}"
       rancherKubernetesEngineConfig:
         ignoreDockerVersion: true
         ingress:
           provider: nginx
           type: ingressConfig
-      name: "{{ cm_cluster_name }}"
+        services:
+          kube-api:
+            extra_args:
+              feature-gates: "TTLAfterFinished=true"
+          kube-controller:
+            extra_args:
+              feature-gates: "TTLAfterFinished=true"
+          kubelet:
+            extra_args:
+              feature-gates: "TTLAfterFinished=true"
+          kubeproxy:
+            extra_args:
+              feature-gates: "TTLAfterFinished=true"
+          scheduler:
+            extra_args:
+              feature-gates: "TTLAfterFinished=true"
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
@@ -144,6 +160,7 @@
     body_format: json
     body:
       type: cluster
+      name: "{{ cm_cluster_name }}"
       rancherKubernetesEngineConfig:
         ignoreDockerVersion: true
         ingress:
@@ -153,7 +170,22 @@
           name: "{{ kube_cloud_provider }}"
           customCloudProvider: |-
             {{ kube_cloud_conf | b64decode }}
-      name: "{{ cm_cluster_name }}"
+        services:
+          kube-api:
+            extra_args:
+              feature-gates: "TTLAfterFinished=true"
+          kube-controller:
+            extra_args:
+              feature-gates: "TTLAfterFinished=true"
+          kubelet:
+            extra_args:
+              feature-gates: "TTLAfterFinished=true"
+          kubeproxy:
+            extra_args:
+              feature-gates: "TTLAfterFinished=true"
+          scheduler:
+            extra_args:
+              feature-gates: "TTLAfterFinished=true"
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
