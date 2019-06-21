@@ -177,6 +177,8 @@
           kube-controller:
             extra_args:
               feature-gates: "TTLAfterFinished=true"
+              # for GCP: https://github.com/projectcalico/canal/issues/74
+              configure-cloud-routes: "{{ true if kube_cloud_provider == 'gce' else false }}"
           kubelet:
             extra_args:
               feature-gates: "TTLAfterFinished=true"
