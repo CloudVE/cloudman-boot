@@ -535,7 +535,7 @@
     --set "cloudlaunch.cloudlaunch-server.postgresql.persistence.storageClass=ebs-provisioner"
     --set "prometheus.persistence.storageClass=nfs-provisioner"
   ignore_errors: true
-  when: cm_skip_cloudman is defined and not cm_skip_cloudman
+  when: cm_skip_cloudman is not defined or not cm_skip_cloudman
 
 # - helm:
 #     host: localhost
@@ -698,7 +698,7 @@
   until: cm_available['status']|default(0) == 200
   retries: 40
   delay: 10
-  when: cm_skip_cloudman is defined and not cm_skip_cloudman
+  when: cm_skip_cloudman is not defined or not cm_skip_cloudman
 
 - name: System help info
   debug:
