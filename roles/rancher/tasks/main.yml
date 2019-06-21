@@ -336,7 +336,7 @@
       Authorization: Bearer {{ token }}
     validate_certs: no
     status_code: 201
-  when: kube_cloud_provider == "gcp"
+  when: kube_cloud_provider == "gce"
 
 - name: Add provider block storage class
   uri:
