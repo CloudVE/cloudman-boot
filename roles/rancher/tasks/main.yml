@@ -131,20 +131,26 @@
           provider: nginx
           type: ingressConfig
         services:
-          kube-api:
-            extra_args:
+          type: "/v3/schemas/rkeConfigServices"
+          kubeApi:
+            type: "/v3/schemas/kubeAPIService"
+            extraArgs:
               feature-gates: "TTLAfterFinished=true"
-          kube-controller:
-            extra_args:
+          kubeController:
+            type: "/v3/schemas/kubeControllerService"
+            extraArgs:
               feature-gates: "TTLAfterFinished=true"
           kubelet:
-            extra_args:
+            type: "/v3/schemas/kubeletService"
+            extraArgs:
               feature-gates: "TTLAfterFinished=true"
           kubeproxy:
-            extra_args:
+            type: "/v3/schemas/kubeproxyService"
+            extraArgs:
               feature-gates: "TTLAfterFinished=true"
           scheduler:
-            extra_args:
+            type: "/v3/schemas/schedulerService"
+            extraArgs:
               feature-gates: "TTLAfterFinished=true"
     headers:
       Authorization: Bearer {{ token }}
@@ -171,22 +177,28 @@
           customCloudProvider: |-
             {{ kube_cloud_conf | b64decode }}
         services:
-          kube-api:
-            extra_args:
+          type: "/v3/schemas/rkeConfigServices"
+          kubeApi:
+            type: "/v3/schemas/kubeAPIService"
+            extraArgs:
               feature-gates: "TTLAfterFinished=true"
-          kube-controller:
-            extra_args:
+          kubeController:
+            type: "/v3/schemas/kubeControllerService"
+            extraArgs:
               feature-gates: "TTLAfterFinished=true"
               # for GCP: https://github.com/projectcalico/canal/issues/74
               configure-cloud-routes: "{{ true if kube_cloud_provider == 'gce' else false }}"
           kubelet:
-            extra_args:
+            type: "/v3/schemas/kubeletService"
+            extraArgs:
               feature-gates: "TTLAfterFinished=true"
           kubeproxy:
-            extra_args:
+            type: "/v3/schemas/kubeproxyService"
+            extraArgs:
               feature-gates: "TTLAfterFinished=true"
           scheduler:
-            extra_args:
+            type: "/v3/schemas/schedulerService"
+            extraArgs:
               feature-gates: "TTLAfterFinished=true"
     headers:
       Authorization: Bearer {{ token }}
