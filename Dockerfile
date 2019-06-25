@@ -1,7 +1,7 @@
 FROM python:3.6-alpine
 
 ENV KUBE_LATEST_VERSION=v1.14.1
-ENV HELM_VERSION=v2.9.1
+ENV HELM_VERSION=v2.14.1
 ENV HELM_FILENAME=helm-${HELM_VERSION}-linux-amd64.tar.gz
 
 RUN echo "===> Add docker..."  && \
