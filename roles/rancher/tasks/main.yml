@@ -1,4 +1,10 @@
 ---
+
+- name: Place CloudMan chart custom values file
+  template:
+    src: cm_chart_values.yml.j2
+    dest: /tmp/cm_chart_values.yml
+
 - name: Decide on password
   set_fact:
     rancher_password: "{{ random_pwd }}"
@@ -537,10 +543,10 @@
     status_code: 201
   ignore_errors: true
 
-# - name: Place CloudMan chart custom values file
-#   template:
-#     src: cm_chart_values.yml.j2
-#     dest: /tmp/cm_chart_values.yml
+- name: Place CloudMan chart custom values file
+  template:
+    src: cm_chart_values.yml.j2
+    dest: /tmp/cm_chart_values.yml
 
 - name: Helm install CloudMan
   command: >
@@ -548,17 +554,7 @@
     --name "cloudman"
     --namespace "{{ cm_namespace_name }}"
     --version "{{ cm_helm_version }}"
-    --set "cluster_type=KUBE_RANCHER"
-    --set "cm_initial_cluster_data={{ cm_initial_cluster_data|default('') }}"
-    --set "rancher_url=https://{{ rancher_server }}:{{ rancher_port }}"
-    --set "rancher_api_key={{ token }}"
-    --set "rancher_cluster_id={{ cluster_id }}"
-    --set "rancher_project_id={{ project_id }}"
-    --set "cloudlaunch.cloudlaunch-server.admin_password={{ rancher_password }}"
-    --set "keycloak.keycloak.password={{ rancher_password }}"
-    --set "global.domain={{ rancher_server }}"
-    --set "cloudlaunch.cloudlaunch-server.postgresql.persistence.storageClass=ebs-provisioner"
-    --set "prometheus.persistence.storageClass=nfs-provisioner"
+    -f /tmp/cm_chart_values.yml
   ignore_errors: true
   when: cm_skip_cloudman is not defined or not (cm_skip_cloudman|bool)
 

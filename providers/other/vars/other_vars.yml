@@ -8,6 +8,7 @@ rancher_admin: admin
 rancher_password: "{{ lookup('env', 'RANCHER_PWD') }}"
 cm_initial_cluster_data: "{{ lookup('env', 'CM_INITIAL_CLUSTER_DATA') }}"
 cm_initial_storage_size: "{{ lookup('env', 'CM_INITIAL_STORAGE_SIZE')|default('100Gi', true) }}"
+cm_helm_values: "{{ lookup('env', 'CM_HELM_VALUES') }}"
 cm_skip_cloudman: "{{ lookup('env', 'CM_SKIP_CLOUDMAN')|default('false', true) }}"
 
 # cloud provider for this cluster:
