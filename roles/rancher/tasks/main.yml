@@ -1,10 +1,5 @@
 ---
 
-- name: Place CloudMan chart custom values file
-  template:
-    src: cm_chart_values.yml.j2
-    dest: /tmp/cm_chart_values.yml
-
 - name: Decide on password
   set_fact:
     rancher_password: "{{ random_pwd }}"
