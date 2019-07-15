@@ -475,6 +475,10 @@
 - name: Update Helm repos
   shell: /usr/local/bin/helm repo update
 
+- name: Fallback to hostPath provisioner when no cloud provider is set
+  shell: /usr/local/bin/kubectl apply -f https://gist.githubusercontent.com/almahmoud/92186a6521cde97f3680a85cf5202bdc/raw/16d08cc4abc2b3f87ab02dec2dd479e4e9fdbd41/fallback-cloudman-boot-storageclass.yaml
+  when: not kube_cloud_provider
+
 # Persistent Volumes are being added instead above
 - name: Check if nfs-provisioner app has been added
   uri:
