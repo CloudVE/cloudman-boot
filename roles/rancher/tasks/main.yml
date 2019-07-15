@@ -131,48 +131,6 @@
         ingress:
           provider: nginx
           type: ingressConfig
-        services:
-          type: "/v3/schemas/rkeConfigServices"
-          kubeApi:
-            type: "/v3/schemas/kubeAPIService"
-            extraArgs:
-              feature-gates: "TTLAfterFinished=true"
-          kubeController:
-            type: "/v3/schemas/kubeControllerService"
-            extraArgs:
-              feature-gates: "TTLAfterFinished=true"
-          kubelet:
-            type: "/v3/schemas/kubeletService"
-            extraArgs:
-              feature-gates: "TTLAfterFinished=true"
-          kubeproxy:
-            type: "/v3/schemas/kubeproxyService"
-            extraArgs:
-              feature-gates: "TTLAfterFinished=true"
-          scheduler:
-            type: "/v3/schemas/schedulerService"
-            extraArgs:
-              feature-gates: "TTLAfterFinished=true"
-    headers:
-      Authorization: Bearer {{ token }}
-    validate_certs: no
-    status_code: 201
-  register: cluster
-  when: not cluster_id is defined and not kube_cloud_provider
-
-- name: Create a cluster
-  uri:
-    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/cluster
-    method: POST
-    body_format: json
-    body:
-      type: cluster
-      name: "{{ cm_cluster_name }}"
-      rancherKubernetesEngineConfig:
-        ignoreDockerVersion: true
-        ingress:
-          provider: nginx
-          type: ingressConfig
         cloudProvider:
           name: "{{ kube_cloud_provider }}"
           customCloudProvider: |-
@@ -207,6 +165,48 @@
     status_code: 201
   register: cluster
   when: not cluster_id is defined and kube_cloud_provider
+
+- name: Create a cluster
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/cluster
+    method: POST
+    body_format: json
+    body:
+      type: cluster
+      name: "{{ cm_cluster_name }}"
+      rancherKubernetesEngineConfig:
+        ignoreDockerVersion: true
+        ingress:
+          provider: nginx
+          type: ingressConfig
+        services:
+          type: "/v3/schemas/rkeConfigServices"
+          kubeApi:
+            type: "/v3/schemas/kubeAPIService"
+            extraArgs:
+              feature-gates: "TTLAfterFinished=true"
+          kubeController:
+            type: "/v3/schemas/kubeControllerService"
+            extraArgs:
+              feature-gates: "TTLAfterFinished=true"
+          kubelet:
+            type: "/v3/schemas/kubeletService"
+            extraArgs:
+              feature-gates: "TTLAfterFinished=true"
+          kubeproxy:
+            type: "/v3/schemas/kubeproxyService"
+            extraArgs:
+              feature-gates: "TTLAfterFinished=true"
+          scheduler:
+            type: "/v3/schemas/schedulerService"
+            extraArgs:
+              feature-gates: "TTLAfterFinished=true"
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+    status_code: 201
+  register: cluster
+  when: not cluster_id is defined and not kube_cloud_provider
 
 - name: Store new cluster id
   set_fact:
@@ -470,7 +470,7 @@
   delay: 2
 
 - name: Add CloudVE Helm repo
-  shell: /usr/local/bin/helm repo add galaxyproject https://raw.githubusercontent.com/CloudVE/helm-charts/master/
+  shell: /usr/local/bin/helm repo add galaxyproject https://raw.githubusercontent.com/cloudve/helm-charts/master/
 
 - name: Update Helm repos
   shell: /usr/local/bin/helm repo update
@@ -704,6 +704,229 @@
   set_fact:
     svc_access_line: "Login to any of these services as user 'admin', using the password you supplied."
   when: using_random_pwd is not defined
+
+- name: Login to KeyCloak
+  uri:
+    url: "https://{{ rancher_server }}/auth/realms/master/protocol/openid-connect/token"
+    method: POST
+    body_format: form-urlencoded
+    body:
+      client_id: admin-cli
+      grant_type: password
+      username: admin
+      password: "{{ rancher_password }}"
+    validate_certs: no
+    return_content: yes
+  register: kc_login_response
+  until: kc_login_response['status']
+  retries: 5
+  delay: 10
+
+- name: Set KeyCloak Token
+  set_fact:
+    kc_token: "{{ kc_login_response.json.access_token }}"
+
+- name: Create KeyCloak SAML Client
+  uri:
+    url: "https://{{ rancher_server }}/auth/admin/realms/master/clients"
+    method: POST
+    body_format: json
+    body:
+      clientId: "https://{{ rancher_server }}:{{ rancher_port }}/v1-saml/keycloak/saml/metadata"
+      name: "rancher"
+      protocol: "saml"
+      frontchannelLogout: false
+      redirectUris: ["https://{{ rancher_server }}:{{ rancher_port }}/v1-saml/keycloak/saml/acs"]
+      attributes: { "saml.authnstatement": false, "saml.client.signature": false, "saml.force.post.binding": false, "saml.server.signature": true}
+    validate_certs: no
+    status_code: 201
+    headers:
+      Authorization: Bearer {{ kc_token }}
+    return_content: yes
+  register: kc_client_response
+  retries: 5
+  delay: 10
+
+- name: Create cn mapping
+  uri:
+    url: "{{ kc_client_response.location }}/protocol-mappers/models"
+    method: POST
+    body_format: json
+    body:
+      config:
+        user.attribute: "username"
+        friendly.name: ""
+        attribute.name: "cn"
+        attribute.nameformat: "Basic"
+      name: "username to cn"
+      protocol: "saml"
+      protocolMapper: "saml-user-property-mapper"
+    validate_certs: no
+    status_code: 201
+    headers:
+      Authorization: Bearer {{ kc_token }}
+  retries: 5
+  delay: 10
+
+- name: Create uid mapping
+  uri:
+    url: "{{ kc_client_response.location }}/protocol-mappers/models"
+    method: POST
+    body_format: json
+    body:
+      config:
+        user.attribute: "username"
+        friendly.name: ""
+        attribute.name: "uid"
+        attribute.nameformat: "Basic"
+      name: "username to uid"
+      protocol: "saml"
+      protocolMapper: "saml-user-property-mapper"
+    validate_certs: no
+    status_code: 201
+    headers:
+      Authorization: Bearer {{ kc_token }}
+  retries: 5
+  delay: 10
+
+- name: Create displayName mapping
+  uri:
+    url: "{{ kc_client_response.location }}/protocol-mappers/models"
+    method: POST
+    body_format: json
+    body:
+      config:
+        user.attribute: "firstName"
+        friendly.name: ""
+        attribute.name: "displayName"
+        attribute.nameformat: "Basic"
+      name: "firstName to displayName"
+      protocol: "saml"
+      protocolMapper: "saml-user-property-mapper"
+    validate_certs: no
+    status_code: 201
+    headers:
+      Authorization: Bearer {{ kc_token }}
+  retries: 5
+  delay: 10
+
+- name: Create Groups mapping
+  uri:
+    url: "{{ kc_client_response.location }}/protocol-mappers/models"
+    method: POST
+    body_format: json
+    body:
+      config:
+        attribute.name: "memberOf"
+        attribute.nameformat: "Basic"
+        friendly.name: ""
+        full.path: false
+        single: true
+      name: "Groups"
+      protocol: "saml"
+      protocolMapper: "saml-group-membership-mapper"
+    validate_certs: no
+    status_code: 201
+    headers:
+      Authorization: Bearer {{ kc_token }}
+  retries: 5
+  delay: 10
+
+- name: Get SAML Metadata IDPSSODescriptor
+  uri:
+    url: "{{ kc_client_response.location }}/installation/providers/saml-idp-descriptor"
+    method: GET
+    validate_certs: no
+    headers:
+      Authorization: Bearer {{ kc_token }}
+    return_content: yes
+  register: idp_metadata
+  retries: 5
+  delay: 10
+
+- name: Generate a key
+  openssl_privatekey:
+    path: /tmp/cm-boot/ansible-rancher.pem
+    size: 2048
+
+- name: Generate CSR
+  openssl_csr:
+    path: /tmp/cm-boot/ansible-rancher.csr
+    privatekey_path: /tmp/cm-boot/ansible-rancher.pem
+    common_name: ansible-rancher
+
+- name: Generate a Self Signed OpenSSL certificate
+  openssl_certificate:
+    path: /tmp/cm-boot/ansible-rancher.crt
+    privatekey_path: /tmp/cm-boot/ansible-rancher.pem
+    csr_path: /tmp/cm-boot/ansible-rancher.csr
+    provider: selfsigned
+
+- name: Set key and certificate
+  set_fact:
+    rancher_key: "{{ lookup('file', '/tmp/cm-boot/ansible-rancher.pem') }}"
+    rancher_cert: "{{ lookup('file', '/tmp/cm-boot/ansible-rancher.crt') }}"
+
+- name: Login to Rancher
+  uri:
+    url: "https://{{ rancher_server }}:{{ rancher_port }}/v3-public/localProviders/local?action=login"
+    method: POST
+    body_format: json
+    body:
+      username: admin
+      password: "{{ rancher_password }}"
+    validate_certs: no
+    status_code: 201
+    return_content: yes
+  register: rancher_login
+  retries: 5
+  delay: 10
+
+- name: Set Rancher Token
+  set_fact:
+    ra_token: "{{ rancher_login.json.token }}"
+
+- name: Setup Rancher External Auth
+  uri:
+    url: "https://{{ rancher_server }}:{{ rancher_port }}/v3/keyCloakConfigs/keycloak"
+    method: PUT
+    validate_certs: no
+    body_format: json
+    body:
+      accessMode: "required"
+      actions: { "disable": "https://{{ rancher_server }}:{{ rancher_port }}/v3/keyCloakConfigs/keycloak?action=disable", "testAndEnable": "https://{{ rancher_server }}:{{ rancher_port }}/v3/keyCloakConfigs/keycloak?action=testAndEnable" }
+      allowedPrincipalIds: ["keycloak_user://admin"]
+      baseType: "authConfig"
+      displayNameField: "displayName"
+      enabled: true
+      groupsField: "memberOf"
+      id: "keycloak"
+      idpMetadataContent: '{{ idp_metadata.content }}'
+      links: { "self": "https://{{ rancher_server }}:{{ rancher_port }}/v3/keyCloakConfigs/keycloak", "update": "https://{{ rancher_server }}:{{ rancher_port }}/v3/keyCloakConfigs/keycloak" }
+      name: "keycloak"
+      rancherApiHost: "https://{{ rancher_server }}:{{ rancher_port }}/"
+      spCert: "{{ rancher_cert }}"
+      spKey: "{{ rancher_key }}"
+      type: "keyCloakConfig"
+      uidField: "uid"
+      userNameField: "cn"
+    headers:
+      Authorization: Bearer {{ ra_token }}
+  retries: 5
+  delay: 10
+
+- name: Set default Rancher user role to admin
+  uri:
+    url: "https://{{ rancher_server }}:{{ rancher_port }}/v3/globalRoles/admin"
+    method: PUT
+    validate_certs: no
+    body_format: json
+    body:
+      newUserDefault: true
+    headers:
+      Authorization: Bearer {{ ra_token }}
+  retries: 5
+  delay: 10
 
 - name: Wait for CloudMan login to become accessible
   uri:
