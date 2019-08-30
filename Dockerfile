@@ -4,6 +4,7 @@ ENV KUBE_LATEST_VERSION=v1.14.1
 ENV HELM_VERSION=v2.14.1
 ENV HELM_FILENAME=helm-${HELM_VERSION}-linux-amd64.tar.gz
 
+# pyopenssl needed to generate key/certificate for rancher/keycloak integration
 RUN echo "===> Add docker..."  && \
     apk --update --no-cache add docker && \
     echo "===> Add build dependencies..."  && \
