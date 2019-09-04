@@ -118,7 +118,7 @@
     cluster_id: "{{ clusters.json.data[0].id }}"
   when: clusters.json.data | length > 0
 
-- name: Create a cluster
+- name: Create a (cloud) cluster
   uri:
     url: https://{{ rancher_server }}:{{ rancher_port }}/v3/cluster
     method: POST
@@ -166,12 +166,12 @@
   register: cluster
   when: not cluster_id is defined and kube_cloud_provider
 
-- name: Store new cluster id
+- name: Store new cloud cluster id
   set_fact:
     cluster_id: "{{ cluster.json.id }}"
   when: cluster is not skipped
 
-- name: Create a cluster
+- name: Create a (local) cluster
   uri:
     url: https://{{ rancher_server }}:{{ rancher_port }}/v3/cluster
     method: POST
@@ -213,7 +213,7 @@
   register: cluster
   when: not cluster_id is defined and not kube_cloud_provider
 
-- name: Store new cluster id
+- name: Store new local cluster id
   set_fact:
     cluster_id: "{{ cluster.json.id }}"
   when: cluster is not skipped
