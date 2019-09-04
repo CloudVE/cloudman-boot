@@ -166,6 +166,11 @@
   register: cluster
   when: not cluster_id is defined and kube_cloud_provider
 
+- name: Store new cluster id
+  set_fact:
+    cluster_id: "{{ cluster.json.id }}"
+  when: cluster is not skipped
+
 - name: Create a cluster
   uri:
     url: https://{{ rancher_server }}:{{ rancher_port }}/v3/cluster
