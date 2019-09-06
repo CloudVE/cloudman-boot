@@ -553,6 +553,7 @@
     --name "cloudman"
     --namespace "{{ cm_namespace_name }}"
     --version "{{ cm_helm_version }}"
+    --set galaxy_oidc_client_secret="{{ random_client_secret }}"
     -f /tmp/cm_chart_values.yml
   ignore_errors: true
   when: cm_skip_cloudman is not defined or not (cm_skip_cloudman|bool)
@@ -747,13 +748,13 @@
     headers:
       Authorization: Bearer {{ kc_token }}
     return_content: yes
-  register: kc_client_response
+  register: kc_rancher_client_resp
   retries: 5
   delay: 10
 
 - name: Create cn mapping
   uri:
-    url: "{{ kc_client_response.location }}/protocol-mappers/models"
+    url: "{{ kc_rancher_client_resp.location }}/protocol-mappers/models"
     method: POST
     body_format: json
     body:
@@ -774,7 +775,7 @@
 
 - name: Create uid mapping
   uri:
-    url: "{{ kc_client_response.location }}/protocol-mappers/models"
+    url: "{{ kc_rancher_client_resp.location }}/protocol-mappers/models"
     method: POST
     body_format: json
     body:
@@ -795,7 +796,7 @@
 
 - name: Create displayName mapping
   uri:
-    url: "{{ kc_client_response.location }}/protocol-mappers/models"
+    url: "{{ kc_rancher_client_resp.location }}/protocol-mappers/models"
     method: POST
     body_format: json
     body:
@@ -816,7 +817,7 @@
 
 - name: Create Groups mapping
   uri:
-    url: "{{ kc_client_response.location }}/protocol-mappers/models"
+    url: "{{ kc_rancher_client_resp.location }}/protocol-mappers/models"
     method: POST
     body_format: json
     body:
@@ -838,7 +839,7 @@
 
 - name: Get SAML Metadata IDPSSODescriptor
   uri:
-    url: "{{ kc_client_response.location }}/installation/providers/saml-idp-descriptor"
+    url: "{{ kc_rancher_client_resp.location }}/installation/providers/saml-idp-descriptor"
     method: GET
     validate_certs: no
     headers:
