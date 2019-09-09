@@ -5,6 +5,7 @@
     - providers/other/vars/other_vars.yml
   vars:
     random_pwd: "{{ lookup('password', '/dev/null length=12 chars=ascii_letters,digits') }}"
+    random_client_secret: "{{ lookup('password', '/dev/null length=8 chars=ascii_letters,digits') | lower }}-{{ lookup('password', '/dev/null length=4 chars=ascii_letters,digits') | lower }}-{{ lookup('password', '/dev/null length=4 chars=ascii_letters,digits') | lower }}-{{ lookup('password', '/dev/null length=4 chars=ascii_letters,digits') | lower }}-{{ lookup('password', '/dev/null length=12 chars=ascii_letters,digits') | lower }}"
   environment:
     PATH: "{{ ansible_env.PATH }}:/usr/local/bin"
   become: yes
