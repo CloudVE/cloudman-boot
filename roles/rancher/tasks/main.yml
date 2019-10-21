@@ -547,6 +547,33 @@
     status_code: 201
   ignore_errors: true
 
+- name: Add cert-manager app
+  uri:
+    url: https://{{ rancher_server }}:4430/v3/projects/{{ project_id }}/app
+    method: POST
+    body_format: json
+    body:
+      name: "cert-manager"
+      targetNamespace: "{{ cm_namespace_name }}"
+      type: "app"
+      prune: false
+      projectId: "{{ project_id }}"
+      externalId: "catalog://?catalog=library&template=cert-manager&version=v0.5.2"
+      answers:
+        defaultImage: "true"
+        image.repository: "quay.io/jetstack/cert-manager-controller"
+        image.tag: "v0.5.2"
+        clusterissuerEnabled: "true"
+        ingressShim.defaultIssuerName: "letsencrypt-prod"
+        letsencrypt.email: "admin@{{ rancher_server }}"
+        createCustomResource: "true"
+        webhook.enabled: "false"
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+    status_code: 201
+  ignore_errors: true
+
 - name: Place CloudMan chart custom values file
   template:
     src: cm_chart_values.yml.j2
@@ -558,7 +585,6 @@
     --name "cloudman"
     --namespace "{{ cm_namespace_name }}"
     --version "{{ cm_helm_version }}"
-    --set galaxy_oidc_client_secret="{{ random_client_secret }}"
     -f /tmp/cm_chart_values.yml
   ignore_errors: true
   when: cm_skip_cloudman is not defined or not (cm_skip_cloudman|bool)
