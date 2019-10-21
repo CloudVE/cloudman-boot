@@ -1,8 +1,8 @@
 #!/usr/bin/python
 import argparse
 import base64
-import json
 import os
+import yaml
 
 from cloudbridge.factory import CloudProviderFactory, ProviderList
 
@@ -11,7 +11,7 @@ def get_bootstrap_data():
     bootstrap_data = os.environ.get('CM_INITIAL_CLUSTER_DATA')
     # Pad data: https://gist.github.com/perrygeo/ee7c65bb1541ff6ac770
     data = base64.b64decode(bootstrap_data + "===").decode('utf-8')
-    return json.loads(data)
+    return yaml.safe_load(data)
 
 
 def get_provider_config(json_data):

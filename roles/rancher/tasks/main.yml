@@ -574,9 +574,14 @@
     status_code: 201
   ignore_errors: true
 
-- name: Place CloudMan chart custom values file
+- name: Create CloudMan chart template file
   template:
     src: cm_chart_values.yml.j2
+    dest: /tmp/template_cm_chart_values.j2
+
+- name: Render CloudMan chart custom values file
+  template:
+    src: /tmp/template_cm_chart_values.j2
     dest: /tmp/cm_chart_values.yml
 
 - name: Helm install CloudMan
