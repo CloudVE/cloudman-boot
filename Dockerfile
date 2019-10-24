@@ -14,7 +14,7 @@ RUN echo "===> Add docker..."  && \
     \
     echo "===> Installing python packages..."  && \
     pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir ansible docker-py pyopenssl cloudbridge && \
+    pip install --no-cache-dir ansible docker-py pyopenssl cloudbridge netaddr && \
     \
     echo "==> Installing latest kubectl and helm..." && \
     apk add --no-cache curl && \
