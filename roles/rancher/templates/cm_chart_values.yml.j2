@@ -1,3 +1,16 @@
+{% macro random_alphanumeric(len) -%}
+  {{ lookup('password', '/dev/null chars=ascii_letters,digits length=' + (len|string)) | lower }}
+{%- endmacro %}
+
+{% macro unique_id(groups_len='8,4,4,12', separator='-') -%}
+  {%- set groups = groups_len.split(',') -%}
+  {%- set parts = [] -%}
+  {%- for n in groups -%}
+    {{- parts.append(random_alphanumeric(n|int)) -}}
+  {%- endfor -%}
+  {{- separator.join(parts) -}}
+{%- endmacro %}
+
 {% if cm_helm_values %}
 {{ cm_helm_values | b64decode }}
 {% endif %}
