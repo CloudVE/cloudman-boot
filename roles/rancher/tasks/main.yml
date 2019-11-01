@@ -759,8 +759,8 @@
     validate_certs: no
     return_content: yes
   register: kc_login_response
-  until: kc_login_response['status']
-  retries: 5
+  until: kc_login_response['status']|default(0) == 200
+  retries: 10
   delay: 10
 
 - name: Set KeyCloak Token
