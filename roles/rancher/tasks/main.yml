@@ -759,8 +759,8 @@
     validate_certs: no
     return_content: yes
   register: kc_login_response
-  until: kc_login_response['status']
-  retries: 5
+  until: kc_login_response['status']|default(0) == 200
+  retries: 30
   delay: 10
 
 - name: Set KeyCloak Token
@@ -873,9 +873,10 @@
   retries: 5
   delay: 10
 
+#https://rancher.com/docs/rancher/v2.x/en/admin-settings/authentication/keycloak/#keycloak-6-0-0-idpssodescriptor-missing-from-options
 - name: Get SAML Metadata IDPSSODescriptor
   uri:
-    url: "{{ kc_rancher_client_resp.location }}/installation/providers/saml-idp-descriptor"
+    url: "https://{{ rancher_server }}/auth/realms/master/protocol/saml/descriptor"
     method: GET
     validate_certs: no
     headers:
@@ -942,7 +943,7 @@
       enabled: true
       groupsField: "memberOf"
       id: "keycloak"
-      idpMetadataContent: '{{ idp_metadata.content }}'
+      idpMetadataContent: '{{ idp_metadata.content | regex_replace("<EntitiesDescriptor ([^>]*)>\s+<EntityDescriptor", "<EntityDescriptor \1") | regex_replace("\n</EntitiesDescriptor>", "") }}'
       links: { "self": "https://{{ rancher_server }}:{{ rancher_port }}/v3/keyCloakConfigs/keycloak", "update": "https://{{ rancher_server }}:{{ rancher_port }}/v3/keyCloakConfigs/keycloak" }
       name: "keycloak"
       rancherApiHost: "https://{{ rancher_server }}:{{ rancher_port }}/"
