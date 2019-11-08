@@ -474,11 +474,36 @@
   retries: 30
   delay: 2
 
+- name: Create cert manager CRDs
+  shell: /usr/local/bin/kubectl apply --validate=false -f https://raw.githubusercontent.com/jetstack/cert-manager/release-0.11/deploy/manifests/00-crds.yaml
+
+- name: Add cert manager helm repo
+  shell: /usr/local/bin/helm repo add jetstack https://charts.jetstack.io
+
 - name: Add CloudVE Helm repo
   shell: /usr/local/bin/helm repo add galaxyproject https://raw.githubusercontent.com/cloudve/helm-charts/master/
 
 - name: Update Helm repos
   shell: /usr/local/bin/helm repo update
+
+- name: Render cluster issuer template
+  template:
+    src: clusterissuer.yaml.j2
+    dest: /tmp/clusterissuer.yaml
+
+- name: Create cert manager cluster issuer
+  shell: /usr/local/bin/kubectl apply -f /tmp/clusterissuer.yaml
+
+- name: Helm install cert-manager
+  command: >
+    /usr/local/bin/helm install jetstack/cert-manager
+    --name "cert-manager"
+    --namespace "cert-manager"
+    --version "0.11.0"
+    --set ingressShim.defaultIssuerName="letsencrypt-prod"
+    --set ingressShim.defaultIssuerKind="ClusterIssuer"
+    --set webhook.enabled=false
+  ignore_errors: true
 
 - name: Fallback to hostPath provisioner when no cloud provider is set
   shell: /usr/local/bin/kubectl apply -f /tmp/cm-boot/roles/rancher/files/hostPath_storageClass.yaml
@@ -522,57 +547,6 @@
     validate_certs: no
     status_code: 201
   when: nfs_app.json.data | length == 0
-
-- name: Add Kubernetes Dashboard app
-  uri:
-    url: https://{{ rancher_server }}:4430/v3/projects/{{ system_project_id }}/app
-    method: POST
-    body_format: json
-    body:
-      name: "kubernetes-dashboard"
-      targetNamespace: "kube-system"
-      type: "app"
-      prune: false
-      projectId: "{{ system_project_id }}"
-      externalId: "catalog://?catalog=library&template=kubernetes-dashboard&version=1.2.0"
-      answers:
-        defaultImage: "true"
-        image.repository: "rancher/kubernetes-dashboard-amd64"
-        image.tag: "v1.10.1"
-        enableSkipLogin: "false"
-        rbac.clusterAdminRole: "true"
-    headers:
-      Authorization: Bearer {{ token }}
-    validate_certs: no
-    status_code: 201
-  ignore_errors: true
-
-- name: Add cert-manager app
-  uri:
-    url: https://{{ rancher_server }}:4430/v3/projects/{{ project_id }}/app
-    method: POST
-    body_format: json
-    body:
-      name: "cert-manager"
-      targetNamespace: "{{ cm_namespace_name }}"
-      type: "app"
-      prune: false
-      projectId: "{{ project_id }}"
-      externalId: "catalog://?catalog=library&template=cert-manager&version=v0.5.2"
-      answers:
-        defaultImage: "true"
-        image.repository: "quay.io/jetstack/cert-manager-controller"
-        image.tag: "v0.5.2"
-        clusterissuerEnabled: "true"
-        ingressShim.defaultIssuerName: "letsencrypt-prod"
-        letsencrypt.email: "admin@{{ rancher_server }}"
-        createCustomResource: "true"
-        webhook.enabled: "false"
-    headers:
-      Authorization: Bearer {{ token }}
-    validate_certs: no
-    status_code: 201
-  ignore_errors: true
 
 - name: Create CloudMan chart template file
   template:
