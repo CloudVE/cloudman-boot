@@ -29,5 +29,6 @@ cm_namespace_name: cloudman
 cm_catalog_name: cloudman-helm
 cm_ingress_name: cloudman-api-ingress
 cm_helm_version: 0.3.1
+cm_deployment_name: "{{ lookup('env', 'CM_DEPLOYMENT_NAME') }}"
 
 galaxy_catalog_name: galaxyproject
