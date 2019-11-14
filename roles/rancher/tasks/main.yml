@@ -510,43 +510,19 @@
   when: not kube_cloud_provider
 
 # Persistent Volumes are being added instead above
-- name: Check if nfs-provisioner app has been added
-  uri:
-    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/project/{{ project_id }}/apps?name=nfs-provisioner
-    headers:
-      Authorization: Bearer {{ token }}
-    validate_certs: no
-  register: nfs_app
-
-- name: Add nfs-provisioner app
-  uri:
-    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/projects/{{ project_id }}/app
-    method: POST
-    body_format: json
-    body:
-      name: "nfs-provisioner"
-      targetNamespace: "{{ cm_namespace_name }}"
-      type: "app"
-      prune: false
-      projectId: "{{ project_id }}"
-      externalId: "catalog://?catalog=library&template=nfs-provisioner&version=0.2.2"
-      answers:
-        defaultImage: "true"
-        image.repository: "quay.io/kubernetes_incubator/nfs-provisioner"
-        image.tag: "v1.0.9"
-        persistence.enabled: "true"
-        persistence.hostPath: "/nfs"
-        persistence.size: "{{ cm_initial_storage_size }}"
-        persistence.storageClass: "ebs-provisioner"
-        storageClass.allowVolumeExpansion: "true"
-        storageClass.create: "true"
-        storageClass.defaultClass: "true"
-        storageClass.reclaimPolicy: "Delete"
-    headers:
-      Authorization: Bearer {{ token }}
-    validate_certs: no
-    status_code: 201
-  when: nfs_app.json.data | length == 0
+- name: Helm install nfs-provisioner
+  command: >
+    /usr/local/bin/helm install stable/nfs-server-provisioner
+    --name "nfs-provisioner"
+    --namespace "{{ cm_namespace_name }}"
+    --version "0.3.1"
+    --set persistence.enabled=true
+    --set persistence.storageClass="ebs-provisioner"
+    --set persistence.size="{{ cm_initial_storage_size }}"
+    --set storageClass.create=true
+    --set storageClass.defaultClass=true
+    --set storageClass.reclaimPolicy="Delete"
+    --set storageClass.allowVolumeExpansion=true
 
 - name: Create CloudMan chart template file
   template:
