@@ -293,7 +293,7 @@
     body_format: json
     body:
       type: "storageClass"
-      name: "ebs-provisioner"
+      name: "ebs"
       reclaimPolicy: "Delete"
       allowVolumeExpansion: true
       provisioner: "kubernetes.io/aws-ebs"
@@ -313,7 +313,7 @@
     body_format: json
     body:
       type: "storageClass"
-      name: "ebs-provisioner"
+      name: "ebs"
       reclaimPolicy: "Delete"
       allowVolumeExpansion: true
       provisioner: "kubernetes.io/azure-disk"
@@ -332,7 +332,7 @@
     body_format: json
     body:
       type: "storageClass"
-      name: "ebs-provisioner"
+      name: "ebs"
       reclaimPolicy: "Delete"
       allowVolumeExpansion: true
       provisioner: "kubernetes.io/gce-pd"
@@ -351,7 +351,7 @@
     body_format: json
     body:
       type: "storageClass"
-      name: "ebs-provisioner"
+      name: "ebs"
       reclaimPolicy: "Delete"
       allowVolumeExpansion: true
       provisioner: "kubernetes.io/cinder"
@@ -505,8 +505,8 @@
     --set webhook.enabled=false
   ignore_errors: true
 
-- name: Fallback to hostPath provisioner when no cloud provider is set
-  shell: /usr/local/bin/kubectl apply -f /tmp/cm-boot/roles/rancher/files/hostPath_storageClass.yaml
+- name: Fallback to hostpath provisioner when no cloud provider is set
+  shell: /usr/local/bin/kubectl apply -f /tmp/cm-boot/roles/rancher/files/hostpath_storage_class.yaml
   when: not kube_cloud_provider
 
 # Persistent Volumes are being added instead above
@@ -517,7 +517,7 @@
     --namespace "{{ cm_namespace_name }}"
     --version "0.3.1"
     --set persistence.enabled=true
-    --set persistence.storageClass="ebs-provisioner"
+    --set persistence.storageClass="ebs"
     --set persistence.size="{{ cm_initial_storage_size }}"
     --set storageClass.create=true
     --set storageClass.defaultClass=true
