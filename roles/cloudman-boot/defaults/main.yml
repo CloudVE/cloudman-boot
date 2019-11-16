@@ -1,4 +1,14 @@
+# CloudMan settings
 cm_cluster_type: "{{ lookup('env', 'CM_CLUSTER_TYPE')|default('KUBE_RANCHER', true) }}"
+cm_initial_cluster_data: "{{ lookup('env', 'CM_INITIAL_CLUSTER_DATA') }}"
+cm_initial_storage_size: "{{ lookup('env', 'CM_INITIAL_STORAGE_SIZE')|default('100Gi', true) }}"
+cm_helm_values: "{{ lookup('env', 'CM_HELM_VALUES') }}"
+cm_skip_cloudman: "{{ lookup('env', 'CM_SKIP_CLOUDMAN')|default('false', true) }}"
+cm_cluster_name: cloudman-cluster
+cm_namespace_name: cloudman
+cm_chart_version: 0.3.1
+cm_deployment_name: "{{ lookup('env', 'CM_DEPLOYMENT_NAME') }}"
+
 # cloud provider for this cluster:
 # ref: https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/
 # ref: https://kubernetes.io/docs/concepts/cluster-administration/cloud-providers/
@@ -19,16 +29,6 @@ rancher_password: "{{ lookup('env', 'RANCHER_PWD') }}"
 rancher_master_etcd: "{{ lookup('env', 'RANCHER_MASTER_ETCD')|default('--etcd', true) }}"
 rancher_master_controlplane: "{{ lookup('env', 'RANCHER_MASTER_CONTROLPLANE')|default('--controlplane', true) }}"
 rancher_master_as_worker: "{{ lookup('env', 'RANCHER_MASTER_WORKER')|default('--worker', true) }}"
-
-# CloudMan settings
-cm_initial_cluster_data: "{{ lookup('env', 'CM_INITIAL_CLUSTER_DATA') }}"
-cm_initial_storage_size: "{{ lookup('env', 'CM_INITIAL_STORAGE_SIZE')|default('100Gi', true) }}"
-cm_helm_values: "{{ lookup('env', 'CM_HELM_VALUES') }}"
-cm_skip_cloudman: "{{ lookup('env', 'CM_SKIP_CLOUDMAN')|default('false', true) }}"
-cm_cluster_name: cloudman-cluster
-cm_namespace_name: cloudman
-cm_helm_version: 0.3.1
-cm_deployment_name: "{{ lookup('env', 'CM_DEPLOYMENT_NAME') }}"
 
 # Used when no rancher password is specified
 random_pwd: "{{ lookup('password', '/dev/null length=12 chars=ascii_letters,digits') }}"

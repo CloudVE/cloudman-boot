@@ -13,6 +13,6 @@
     /usr/local/bin/helm install galaxyproject/cloudman
     --name "cloudman"
     --namespace "{{ cm_namespace_name }}"
-    --version "{{ cm_helm_version }}"
+    --version "{{ cm_chart_version }}"
     -f /tmp/cm_chart_values.yml
   ignore_errors: true
