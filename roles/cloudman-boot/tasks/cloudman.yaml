@@ -1,0 +1,18 @@
+- name: Create CloudMan chart template file
+  template:
+    src: cm_chart_values.yml.j2
+    dest: /tmp/template_cm_chart_values.j2
+
+- name: Render CloudMan chart custom values file
+  template:
+    src: /tmp/template_cm_chart_values.j2
+    dest: /tmp/cm_chart_values.yml
+
+- name: Helm install CloudMan
+  command: >
+    /usr/local/bin/helm install galaxyproject/cloudman
+    --name "cloudman"
+    --namespace "{{ cm_namespace_name }}"
+    --version "{{ cm_chart_version }}"
+    -f /tmp/cm_chart_values.yml
+  ignore_errors: true

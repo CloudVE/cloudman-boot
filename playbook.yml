@@ -1,17 +1,5 @@
-- name: Setup Rancher Server with CloudMan
-  # hosts: "Rancher"
+- name: Boot CloudMan
   hosts: all
-  vars_files:
-    - providers/other/vars/other_vars.yml
-  vars:
-    random_pwd: "{{ lookup('password', '/dev/null length=12 chars=ascii_letters,digits') }}"
-    random_client_secret: "{{ lookup('password', '/dev/null length=8 chars=ascii_letters,digits') | lower }}-{{ lookup('password', '/dev/null length=4 chars=ascii_letters,digits') | lower }}-{{ lookup('password', '/dev/null length=4 chars=ascii_letters,digits') | lower }}-{{ lookup('password', '/dev/null length=4 chars=ascii_letters,digits') | lower }}-{{ lookup('password', '/dev/null length=12 chars=ascii_letters,digits') | lower }}"
-  environment:
-    PATH: "{{ ansible_env.PATH }}:/usr/local/bin"
   become: yes
-  # vars:
-  #   - ansible_python_interpreter: "/usr/bin/env python"
-  #   - ansible_python_interpreter: /usr/bin/python3
   roles:
-    - { role: rancher, tags: ["rancher"] }
-
+    - { role: cloudman-boot, tags: ["cloudman-boot"] }

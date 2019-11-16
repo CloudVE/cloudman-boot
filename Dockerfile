@@ -36,5 +36,5 @@ WORKDIR /tmp/cm-boot
 ADD . /tmp/cm-boot
 
 ENV ANSIBLE_DEBUG=${ANSIBLE_DEBUG:--v}
-CMD ansible-playbook -i "localhost," -c local playbook.yml --tags rancher \
+CMD ansible-playbook -i "localhost," -c local playbook.yml --tags cloudman-boot \
     $ANSIBLE_DEBUG

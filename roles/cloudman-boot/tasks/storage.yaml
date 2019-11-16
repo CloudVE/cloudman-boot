@@ -1,0 +1,13 @@
+- name: Helm install nfs-provisioner
+  command: >
+    /usr/local/bin/helm install stable/nfs-server-provisioner
+    --name "nfs-provisioner"
+    --namespace "{{ cm_namespace_name }}"
+    --version "0.3.1"
+    --set persistence.enabled=true
+    --set persistence.storageClass="ebs"
+    --set persistence.size="{{ cm_initial_storage_size }}"
+    --set storageClass.create=true
+    --set storageClass.defaultClass=true
+    --set storageClass.reclaimPolicy="Delete"
+    --set storageClass.allowVolumeExpansion=true
