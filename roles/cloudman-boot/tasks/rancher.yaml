@@ -1,0 +1,419 @@
+- name: Decide on password
+  set_fact:
+    rancher_password: "{{ random_pwd }}"
+    using_random_pwd: true
+  when: rancher_password == ''
+
+- debug:
+    msg: "Using rancher pwd {{ rancher_password }}"
+    verbosity: 2
+
+- name: Pull and run the Rancher/server container
+  docker_container:
+      name: "{{ rancher_name }}"
+      image: rancher/rancher:{{ rancher_version }}
+      restart_policy: unless-stopped
+      ports:
+        - "{{ rancher_port_http }}:80"
+        - "{{ rancher_port }}:443"
+
+- debug: msg="Using rancher_server address {{ rancher_server }}"
+
+- name: Setup login
+  uri:
+    url: "https://{{ rancher_server }}:{{ rancher_port }}/v3-public/localProviders/local?action=login"
+    method: POST
+    body_format: json
+    body:
+      username: admin
+      password: admin
+    validate_certs: no
+    status_code: 201
+    return_content: yes
+  ignore_errors: yes
+  register: login_response
+  until: login_response['status'] | default(0) == 201
+  retries: 5
+  delay: 10
+
+- name: Set current admin password
+  set_fact:
+    rpwd: admin
+    token: "{{ login_response.json.token }}"
+  when: login_response is succeeded
+
+- name: Re-setup login
+  uri:
+    url: "https://{{ rancher_server }}:{{ rancher_port }}/v3-public/localProviders/local?action=login"
+    method: POST
+    body_format: json
+    body:
+      username: admin
+      password: "{{ rancher_password }}"
+    validate_certs: no
+    status_code: 201
+    return_content: yes
+  register: login_response
+  when: login_response is failed
+
+- name: Set current admin password
+  set_fact:
+    rpwd: "{{ rancher_password }}"
+    token: "{{ login_response.json.token }}"
+  when: rpwd is undefined
+
+- name: Change password
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/users?action=changepassword
+    method: POST
+    body_format: json
+    body:
+      currentPassword: "{{ rpwd }}"
+      newPassword: "{{ rancher_password }}"
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+
+- name: Configure server URL
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/settings/server-url
+    method: PUT
+    body_format: json
+    body:
+      name: server-url
+      type: setting
+      value: "https://{{ rancher_server }}:{{ rancher_port }}"
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+
+- name: Check if cluster already exists
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/clusters?name={{ cm_cluster_name }}
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+  register: clusters
+
+- name: Store existing cluster id
+  set_fact:
+    cluster_id: "{{ clusters.json.data[0].id }}"
+  when: clusters.json.data | length > 0
+
+- name: Create a (cloud) cluster
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/cluster
+    method: POST
+    body_format: json
+    body:
+      type: cluster
+      name: "{{ cm_cluster_name }}"
+      rancherKubernetesEngineConfig:
+        ignoreDockerVersion: true
+        ingress:
+          provider: nginx
+          type: ingressConfig
+        cloudProvider:
+          name: "{{ kube_cloud_provider }}"
+          customCloudProvider: |-
+            {{ kube_cloud_conf | b64decode }}
+        services:
+          type: "/v3/schemas/rkeConfigServices"
+          kubeApi:
+            type: "/v3/schemas/kubeAPIService"
+            extraArgs:
+              feature-gates: "TTLAfterFinished=true"
+          kubeController:
+            type: "/v3/schemas/kubeControllerService"
+            extraArgs:
+              feature-gates: "TTLAfterFinished=true"
+              # for GCP: https://github.com/projectcalico/canal/issues/74
+              configure-cloud-routes: "{{ true if kube_cloud_provider == 'gce' else false }}"
+          kubelet:
+            type: "/v3/schemas/kubeletService"
+            extraArgs:
+              feature-gates: "TTLAfterFinished=true"
+          kubeproxy:
+            type: "/v3/schemas/kubeproxyService"
+            extraArgs:
+              feature-gates: "TTLAfterFinished=true"
+          scheduler:
+            type: "/v3/schemas/schedulerService"
+            extraArgs:
+              feature-gates: "TTLAfterFinished=true"
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+    status_code: 201
+  register: cluster
+  when: not cluster_id is defined and kube_cloud_provider
+
+- name: Store new cloud cluster id
+  set_fact:
+    cluster_id: "{{ cluster.json.id }}"
+  when: cluster is not skipped
+
+- name: Create a (local) cluster
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/cluster
+    method: POST
+    body_format: json
+    body:
+      type: cluster
+      name: "{{ cm_cluster_name }}"
+      rancherKubernetesEngineConfig:
+        ignoreDockerVersion: true
+        ingress:
+          provider: nginx
+          type: ingressConfig
+        services:
+          type: "/v3/schemas/rkeConfigServices"
+          kubeApi:
+            type: "/v3/schemas/kubeAPIService"
+            extraArgs:
+              feature-gates: "TTLAfterFinished=true"
+          kubeController:
+            type: "/v3/schemas/kubeControllerService"
+            extraArgs:
+              feature-gates: "TTLAfterFinished=true"
+          kubelet:
+            type: "/v3/schemas/kubeletService"
+            extraArgs:
+              feature-gates: "TTLAfterFinished=true"
+          kubeproxy:
+            type: "/v3/schemas/kubeproxyService"
+            extraArgs:
+              feature-gates: "TTLAfterFinished=true"
+          scheduler:
+            type: "/v3/schemas/schedulerService"
+            extraArgs:
+              feature-gates: "TTLAfterFinished=true"
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+    status_code: 201
+  register: cluster
+  when: not cluster_id is defined and not kube_cloud_provider
+
+- name: Store new local cluster id
+  set_fact:
+    cluster_id: "{{ cluster.json.id }}"
+  when: cluster is not skipped
+
+# Special handling for AWS
+# https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/aws#tagging-amazon-resources
+# There is a possible race condition here if the cluster initialization completes before the tag
+# is set, which seems unlikely. However, in such an event, we would have to decompose setting the
+# cloudProvider into two steps. First create the cluster without the cloudProvider configured,
+# then, obtain the cluster id and set the instance tag and finally update the cluster again with
+# the correct cloudProvider configured.
+- name: Set aws instance tag
+  script: set_aws_instance_tag.py {{ cluster_id }}
+  environment:
+    CM_INITIAL_CLUSTER_DATA: "{{ cm_initial_cluster_data }}"
+  when: kube_cloud_provider == "aws"
+
+- name: Generate cluster registration token and extract node command
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/clusterregistrationtoken
+    method: POST
+    body_format: json
+    body:
+      type: clusterRegistrationToken
+      clusterId: "{{ cluster_id }}"
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+    status_code: 201
+  register: node_command
+
+- name: Extract node command
+  set_fact:
+    node_command: "{{ node_command.json.nodeCommand }}"
+
+- name: Remove sudo from the node command
+  set_fact:
+    node_command: "{{ node_command | replace('sudo ', '') }}"
+
+- debug: msg="Node cmd is {{ node_command }} {{ node_command }} {{ rancher_master_etcd }} {{ rancher_master_controlplane }} {{ rancher_master_as_worker }}"
+
+- name: Get current cluster status
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/clusters/{{ cluster_id }}
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+  register: cluster_state1
+
+- name: Add master as a node
+  command: "{{ node_command }} {{ rancher_master_etcd }} {{ rancher_master_controlplane }} {{ rancher_master_as_worker }}"
+  when: cluster_state1.json.state == "provisioning"
+
+- name: Wait for the cluster to become active
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/clusters/{{ cluster_id }}
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+  register: cluster_state_dbg
+
+- name: Wait for the cluster to become active
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/clusters/{{ cluster_id }}
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+  register: cluster_state2
+  until: '"active" in cluster_state2.json.state'
+  retries: 50
+  delay: 15
+
+- name: Add provider block storage class
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port}}/v3/clusters/{{ cluster_id }}/storageclass
+    method: POST
+    body_format: json
+    body:
+      type: "storageClass"
+      name: "ebs"
+      reclaimPolicy: "Delete"
+      allowVolumeExpansion: true
+      provisioner: "kubernetes.io/aws-ebs"
+      parameters:
+        type: "gp2"
+        encrypted: "false"
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+    status_code: 201
+  when: kube_cloud_provider == "aws"
+
+- name: Add provider block storage class
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port}}/v3/clusters/{{ cluster_id }}/storageclass
+    method: POST
+    body_format: json
+    body:
+      type: "storageClass"
+      name: "ebs"
+      reclaimPolicy: "Delete"
+      allowVolumeExpansion: true
+      provisioner: "kubernetes.io/azure-disk"
+      parameters:
+        kind: "shared"
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+    status_code: 201
+  when: kube_cloud_provider == "azure"
+
+- name: Add provider block storage class
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port}}/v3/clusters/{{ cluster_id }}/storageclass
+    method: POST
+    body_format: json
+    body:
+      type: "storageClass"
+      name: "ebs"
+      reclaimPolicy: "Delete"
+      allowVolumeExpansion: true
+      provisioner: "kubernetes.io/gce-pd"
+      parameters:
+        type: "pd-ssd"
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+    status_code: 201
+  when: kube_cloud_provider == "gce"
+
+- name: Add provider block storage class
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port}}/v3/clusters/{{ cluster_id }}/storageclass
+    method: POST
+    body_format: json
+    body:
+      type: "storageClass"
+      name: "ebs"
+      reclaimPolicy: "Delete"
+      allowVolumeExpansion: true
+      provisioner: "kubernetes.io/cinder"
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+    status_code: 201
+  when: kube_cloud_provider == "openstack"
+
+- name: Fallback to hostpath provisioner when no cloud provider is set
+  shell: /usr/local/bin/kubectl apply -f /tmp/cm-boot/roles/rancher/files/hostpath_storage_class.yaml
+  when: not kube_cloud_provider
+
+- name: Get project info
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/projects?clusterId={{ cluster_id }}
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+  register: project
+
+- name: Set project id
+  set_fact:
+    project_id: "{{ project.json.data[0].id }}"
+    system_project_id: "{{ project.json.data[1].id }}"
+
+- name: Check if CloudMan namespace already exists
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/cluster/{{ cluster_id }}/namespaces?name={{ cm_namespace_name }}
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+  register: cm_ns
+
+- name: Add CloudMan namespace
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/clusters/{{ cluster_id }}/namespace
+    method: POST
+    body_format: json
+    body:
+      name: "{{ cm_namespace_name }}"
+      type: namespace
+      projectId: "{{ project_id }}"
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+    status_code: 201
+  when: cm_ns.json.data | length == 0
+
+- name: Add kube-system namespace to the Default project
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/cluster/{{ cluster_id }}/namespaces/kube-system
+    method: PUT
+    body_format: json
+    body:
+      baseType: namespace
+      id: kube-system
+      name: kube-system
+      projectId: "{{ project_id }}"
+      type: namespace
+    headers:
+      Authorization: Bearer {{ token }}
+    validate_certs: no
+
+- name: Fetch kubectl config from Rancher
+  uri:
+    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/clusters/{{ cluster_id }}?action=generateKubeconfig
+    method: POST
+    headers:
+      Content-Type: application/json
+      Authorization: Bearer {{ token }}
+    validate_certs: False
+  register: kubectl_config
+
+- name: Make sure ~/.kube dir exist
+  file:
+    path: ~/.kube
+    state: directory
+
+- name: Save kubectl config
+  copy:
+    content: "{{ kubectl_config.json.config }}"
+    dest: ~/.kube/config
