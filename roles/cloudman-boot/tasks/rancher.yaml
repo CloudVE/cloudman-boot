@@ -281,7 +281,7 @@
       provisioner: "kubernetes.io/aws-ebs"
       parameters:
         type: "gp2"
-        encrypted: "false"
+        encrypted: "true"
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
