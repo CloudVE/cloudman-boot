@@ -20,7 +20,7 @@ def get_provider_config(json_data):
     zone = target.get('target_zone')
     cloud = zone.get('cloud')
     region = zone.get('region')
-    credentials = config.get('credentials')
+    credentials = config.get('credentials', {})
 
     provider_config = {}
     provider_config.update(zone)
