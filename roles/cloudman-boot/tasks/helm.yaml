@@ -1,15 +1,5 @@
-- name: Setup service account
-  shell: /usr/local/bin/kubectl create serviceaccount --namespace kube-system tiller && /usr/local/bin/kubectl create clusterrolebinding tiller-cluster-rule --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
-
-- name: Init Helm
-  shell: /usr/local/bin/helm init --service-account tiller
-
-- name: Wait for tiller pod to start...
-  command: /usr/local/bin/helm list
-  register: tiller_ready
-  until: tiller_ready.rc == 0
-  retries: 30
-  delay: 2
+- name: Add stable Helm repo
+  shell: /usr/local/bin/helm repo add stable https://kubernetes-charts.storage.googleapis.com/
 
 - name: Add CloudVE Helm repo
   shell: /usr/local/bin/helm repo add galaxyproject https://raw.githubusercontent.com/cloudve/helm-charts/master/
