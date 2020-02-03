@@ -1,7 +1,6 @@
 - name: Helm install nfs-provisioner
   command: >
-    /usr/local/bin/helm install stable/nfs-server-provisioner
-    --name "nfs-provisioner"
+    /usr/local/bin/helm install nfs-provisioner stable/nfs-server-provisioner
     --namespace "{{ cm_namespace_name }}"
     --version "0.3.1"
     --set persistence.enabled=true

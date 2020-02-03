@@ -1,3 +1,7 @@
+- name: Create cert-manager namespace
+  command: >
+    /usr/local/bin/kubectl create namespace cert-manager
+
 - name: Create cert manager CRDs
   shell: /usr/local/bin/kubectl apply --validate=false -f https://raw.githubusercontent.com/jetstack/cert-manager/release-0.11/deploy/manifests/00-crds.yaml
 
@@ -17,8 +21,7 @@
 
 - name: Helm install cert-manager
   command: >
-    /usr/local/bin/helm install jetstack/cert-manager
-    --name "cert-manager"
+    /usr/local/bin/helm install cert-manager jetstack/cert-manager
     --namespace "cert-manager"
     --version "0.11.0"
     --set ingressShim.defaultIssuerName="letsencrypt-prod"

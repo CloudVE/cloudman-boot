@@ -1,7 +1,7 @@
 FROM ubuntu:18.04
 
 ENV KUBE_LATEST_VERSION=v1.16.2
-ENV HELM_VERSION=v2.15.2
+ENV HELM_VERSION=v3.0.2
 ENV HELM_FILENAME=helm-${HELM_VERSION}-linux-amd64.tar.gz
 ENV PYTHONUNBUFFERED 1
 ARG DEBIAN_FRONTEND=noninteractive
@@ -25,7 +25,7 @@ RUN echo "===> Installing system packages and docker..." \
     && pip3 install --no-cache-dir ansible docker-py pyopenssl cloudbridge netaddr \
     && echo "==> Installing latest kubectl and helm..." \
     && curl -L https://storage.googleapis.com/kubernetes-release/release/${KUBE_LATEST_VERSION}/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl \
-    && curl -L https://storage.googleapis.com/kubernetes-helm/${HELM_FILENAME} | tar xz && mv linux-amd64/helm /usr/local/bin/helm && rm -rf linux-amd64 \
+    && curl -L https://get.helm.sh/${HELM_FILENAME} | tar xz && mv linux-amd64/helm /usr/local/bin/helm && rm -rf linux-amd64 \
     && chmod +x /usr/local/bin/kubectl \
     && chmod +x /usr/local/bin/helm \
     && apt-get autoremove -y && apt-get clean \
