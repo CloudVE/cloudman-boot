@@ -1,0 +1,9 @@
+- name: Create CVMFS namespace
+  command: >
+    /usr/local/bin/kubectl create namespace cvmfs
+
+- name: Helm install GALAXY-CVMFS-CSI
+  command: >
+    /usr/local/bin/helm install gxy-cvmfs galaxyproject/galaxy-cvmfs-csi
+    --namespace cvmfs
+  ignore_errors: true
