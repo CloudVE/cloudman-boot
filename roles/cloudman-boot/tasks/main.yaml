@@ -13,6 +13,9 @@
 - name: Setup cert-manager
   include_tasks: certmanager.yaml
 
+- name: Setup Galaxy-CVMFS-CSI
+  include_tasks: cvmfs.yaml
+
 - name: Setup CloudMan
   include_tasks: cloudman.yaml
   when: cm_skip_cloudman is not defined or not (cm_skip_cloudman|bool)

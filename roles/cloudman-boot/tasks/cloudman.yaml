@@ -18,10 +18,6 @@
   - podmonitors.monitoring.coreos.com
   ignore_errors: true
 
-- name: Create CVMFS namespace
-  command: >
-    /usr/local/bin/kubectl create namespace cvmfs
-
 - name: Helm install CloudMan
   command: >
     /usr/local/bin/helm install cloudman galaxyproject/cloudman
