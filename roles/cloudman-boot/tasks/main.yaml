@@ -10,6 +10,9 @@
 - name: Setup common storage providers
   include_tasks: storage.yaml
 
+- name: Setup Galaxy-CVMFS-CSI
+  include_tasks: cvmfs.yaml
+
 - name: Setup cert-manager
   include_tasks: certmanager.yaml
 
