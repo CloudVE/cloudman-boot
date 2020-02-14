@@ -235,6 +235,22 @@
   set_fact:
     node_command: "{{ node_command | replace('sudo ', '') }}"
 
+# The Azure VM name must be used as the kubelet hostname, as the kubelet will
+# use that name to query the Azure API and fetch the VM. Therefore, we pass
+# this name as --node-name to the rancher agent, which will in turn pass it
+# to the kubelet as --hostname-override.
+- name: Get Azure VM Name
+  script: print_azure_vm_name.py
+  environment:
+    CM_INITIAL_CLUSTER_DATA: "{{ cm_initial_cluster_data }}"
+  register: azure_vm_name_output
+  when: kube_cloud_provider == "azure"
+
+- name: Append Azure VM name to the rancher node command
+  set_fact:
+    node_command: "{{ node_command }} --node-name {{ azure_vm_name_output.stdout }}"
+  when: kube_cloud_provider == "azure"
+
 - debug: msg="Node cmd is {{ node_command }} {{ node_command }} {{ rancher_master_etcd }} {{ rancher_master_controlplane }} {{ rancher_master_as_worker }}"
 
 - name: Get current cluster status
