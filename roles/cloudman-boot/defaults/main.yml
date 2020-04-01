@@ -6,7 +6,7 @@ cm_helm_values: "{{ lookup('env', 'CM_HELM_VALUES') }}"
 cm_skip_cloudman: "{{ lookup('env', 'CM_SKIP_CLOUDMAN')|default('false', true) }}"
 cm_cluster_name: cloudman-cluster
 cm_namespace_name: cloudman
-cm_chart_version: 0.3.2
+cm_chart_version: 0.4.0
 cm_deployment_name: "{{ lookup('env', 'CM_DEPLOYMENT_NAME') }}"
 
 # cloud provider for this cluster:
