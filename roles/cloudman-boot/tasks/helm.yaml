@@ -3,6 +3,11 @@
 
 - name: Add CloudVE Helm repo
   shell: /usr/local/bin/helm repo add galaxyproject {{ cm_charts_repo }}
+  when: cm_charts_repo != ''
+  
+- name: Add CloudVE Helm repo
+  shell: /usr/local/bin/helm repo add galaxyproject https://raw.githubusercontent.com/cloudve/helm-charts/master/
+  when: cm_charts_repo == ''
 
 - name: Update Helm repos
   shell: /usr/local/bin/helm repo update
