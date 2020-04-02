@@ -18,6 +18,15 @@
   - podmonitors.monitoring.coreos.com
   ignore_errors: true
 
+- name: Helm install CloudMan latest
+  command: >
+    /usr/local/bin/helm install cloudman galaxyproject/cloudman
+    --namespace "{{ cm_namespace_name }}"
+    -f /tmp/cm_chart_values.yml
+  ignore_errors: true
+  when: cm_chart_version == ''
+
+
 - name: Helm install CloudMan
   command: >
     /usr/local/bin/helm install cloudman galaxyproject/cloudman
@@ -25,3 +34,4 @@
     --version "{{ cm_chart_version }}"
     -f /tmp/cm_chart_values.yml
   ignore_errors: true
+  when: cm_chart_version != ''
