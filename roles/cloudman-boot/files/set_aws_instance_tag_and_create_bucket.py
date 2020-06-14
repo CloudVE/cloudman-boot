@@ -43,6 +43,7 @@ def main(cluster_id):
         this_inst._ec2_instance.create_tags(
             Tags=[{'Key': f'kubernetes.io/cluster/{cluster_id}',
                    'Value': "owned"}])
+    bucket = provider.storage.buckets.create(os.environ.get('CM_BUCKET_NAME'))
 
 
 if __name__ == '__main__':
