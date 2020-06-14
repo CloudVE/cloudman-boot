@@ -207,11 +207,10 @@
 # cloudProvider into two steps. First create the cluster without the cloudProvider configured,
 # then, obtain the cluster id and set the instance tag and finally update the cluster again with
 # the correct cloudProvider configured.
-- name: Set aws instance tag and create bucket
-  script: set_aws_instance_tag_and_create_bucket.py {{ cluster_id }}
+- name: Set aws instance tag
+  script: set_aws_instance_tag.py {{ cluster_id }}
   environment:
     CM_INITIAL_CLUSTER_DATA: "{{ cm_initial_cluster_data }}"
-    CM_BUCKET_NAME: "{{ rancher_server | replace('.', '-') }}"-gvl-data
   when: kube_cloud_provider == "aws"
 
 - name: Generate cluster registration token and extract node command
