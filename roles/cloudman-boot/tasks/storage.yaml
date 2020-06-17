@@ -23,3 +23,4 @@
     --set params.s3-access-key-id="{{ (cm_initial_cluster_data | b64decode | from_yaml).cloud_config.credentials.aws_access_key }}"
     --set params.s3-secret-access-key="{{ (cm_initial_cluster_data | b64decode | from_yaml).cloud_config.credentials.aws_secret_key }}"
   when: kube_cloud_provider == "aws"
+  ignore_errors: true
