@@ -44,7 +44,6 @@ def main(cluster_id):
             Tags=[{'Key': f'kubernetes.io/cluster/{cluster_id}',
                    'Value': "owned"}])
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Set AWS instance tag')
     parser.add_argument('cluster_id', help='cluster id of the kubernetes/rancher cluster')
