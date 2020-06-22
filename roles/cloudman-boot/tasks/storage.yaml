@@ -11,7 +11,7 @@
     --set storageClass.reclaimPolicy="Delete"
     --set storageClass.allowVolumeExpansion=true
 
-- name: Helm install RClone for AWS
+- name: Helm install RClone for AWS S3
   command: >
     /usr/local/bin/helm install rclone-csi wunderio/csi-rclone
     --namespace "{{ cm_namespace_name }}"
@@ -23,4 +23,21 @@
     --set params.s3-access-key-id="{{ (cm_initial_cluster_data | b64decode | from_yaml).cloud_config.credentials.aws_access_key }}"
     --set params.s3-secret-access-key="{{ (cm_initial_cluster_data | b64decode | from_yaml).cloud_config.credentials.aws_secret_key }}"
   when: kube_cloud_provider == "aws"
+  ignore_errors: true
+
+- name: Helm install RClone for OpenStack Swift
+  command: >
+    /usr/local/bin/helm install rclone-csi wunderio/csi-rclone
+    --namespace "{{ cm_namespace_name }}"
+    --set storageClass.name="rclone"
+    --set params.remote="swift"
+    --set params.remotePath="{{ rancher_server | replace('.', '-') }}-gvl-data"
+    --set params.swift-user="{{ (cm_initial_cluster_data | b64decode | from_yaml).cloud_config.credentials.os_username }}"
+    --set params.swift-key="{{ (cm_initial_cluster_data | b64decode | from_yaml).cloud_config.credentials.os_password }}"
+    --set params.swift-auth="{{ (cm_initial_cluster_data | b64decode | from_yaml).cloud_config.target.target_zone.cloud.auth_url }}"
+    --set params.swift-domain="{{ (cm_initial_cluster_data | b64decode | from_yaml).cloud_config.credentials.os_project_domain_name }}"
+    --set params.swift-tenant="{{ (cm_initial_cluster_data | b64decode | from_yaml).cloud_config.credentials.os_project_name }}"
+    --set params.swift-region="{{ (cm_initial_cluster_data | b64decode | from_yaml).cloud_config.target.target_zone.region.name }}"
+    --set params.swift-tenant-domain="{{ (cm_initial_cluster_data | b64decode | from_yaml).cloud_config.credentials.os_user_domain_name }}"  
+  when: kube_cloud_provider == "openstack"
   ignore_errors: true
