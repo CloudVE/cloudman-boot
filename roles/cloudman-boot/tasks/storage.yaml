@@ -32,6 +32,10 @@
     --set storageClass.name="rclone"
     --set params.remote="swift"
     --set params.remotePath="{{ rancher_server | replace('.', '-') }}-gvl-data"
+    --set params.s3-provider=~
+    --set params.s3-endpoint=~
+    --set params.s3-access-key-id=~
+    --set params.s3-secret-access-key=~
     --set params.swift-user="{{ (cm_initial_cluster_data | b64decode | from_yaml).cloud_config.credentials.os_username }}"
     --set params.swift-key="{{ (cm_initial_cluster_data | b64decode | from_yaml).cloud_config.credentials.os_password }}"
     --set params.swift-auth="{{ (cm_initial_cluster_data | b64decode | from_yaml).cloud_config.target.target_zone.cloud.auth_url }}"
