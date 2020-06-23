@@ -27,7 +27,7 @@
 
 - name: Helm install RClone for OpenStack Swift
   command: >
-    /usr/local/bin/helm install rclone-csi wunderio/csi-rclone
+    /usr/local/bin/helm install rclone-csi galaxyproject/csi-rclone
     --namespace "{{ cm_namespace_name }}"
     --set storageClass.name="rclone"
     --set params.remote="swift"
