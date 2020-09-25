@@ -81,14 +81,6 @@ spec:
           configMap:
             name: local-path-config
 ---
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: ebs
-provisioner: rancher.io/local-path
-volumeBindingMode: WaitForFirstConsumer
-reclaimPolicy: Delete
----
 kind: ConfigMap
 apiVersion: v1
 metadata:

@@ -1,20 +1,23 @@
 - name: Setup Rancher
-  include_tasks: rancher.yaml
-  when: cm_cluster_type == 'KUBE_RANCHER'
+  include_tasks: k3s.yaml
+  when: cm_cluster_type == 'KUBE_K3S'
   tags:
     - rancher
 
 - name: Setup Helm
   include_tasks: helm.yaml
 
-- name: Setup common storage providers
-  include_tasks: storage.yaml
-
-- name: Setup Galaxy-CVMFS-CSI
-  include_tasks: cvmfs.yaml
+- name: Setup ingress controller
+  include_tasks: ingress.yaml
 
 - name: Setup cert-manager
   include_tasks: certmanager.yaml
+
+- name: Setup common storage providers
+  include_tasks: storage.yaml
+
+- name: Setup Rancher
+  include_tasks: rancher.yaml
 
 - name: Setup CloudMan
   include_tasks: cloudman.yaml
@@ -22,7 +25,7 @@
 
 - name: Setup Rancher Keycloak integration
   include_tasks: rancher_keycloak.yaml
-  when: cm_cluster_type == 'KUBE_RANCHER'
+  when: cm_cluster_type == 'KUBE_K3S'
   tags:
     - rancher
 

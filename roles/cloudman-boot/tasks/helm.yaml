@@ -1,16 +1,21 @@
+- name: Install Helm
+  shell: curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+
 - name: Add stable Helm repo
   shell: /usr/local/bin/helm repo add stable https://kubernetes-charts.storage.googleapis.com/
+  ignore_errors: True
+
+- name: Add Rancher Helm repo
+  shell: /usr/local/bin/helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
+  ignore_errors: True
 
 - name: Add wunderio Helm repo for RClone
   shell: /usr/local/bin/helm repo add wunderio https://storage.googleapis.com/charts.wdr.io/
+  ignore_errors: True
 
 - name: Add CloudVE Helm repo
   shell: /usr/local/bin/helm repo add galaxyproject {{ cm_charts_repo }}
-  when: cm_charts_repo != ''
-  
-- name: Add CloudVE Helm repo
-  shell: /usr/local/bin/helm repo add galaxyproject https://raw.githubusercontent.com/cloudve/helm-charts/master/
-  when: cm_charts_repo == ''
+  ignore_errors: True
 
 - name: Update Helm repos
   shell: /usr/local/bin/helm repo update

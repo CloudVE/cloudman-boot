@@ -15,7 +15,7 @@
       "The system has now been setup. Access CloudMan at https://{{ rancher_server }}/"
       ""
       "There are also these additional services available:"
-      "  Rancher: https://{{ rancher_server }}:{{ rancher_port }}/"
+      "  Rancher: https://{{ rancher_server }}.xip.io/"
       "  Keycloak: https://{{ rancher_server }}/auth/"
       ""
       "{{ svc_access_line }}"

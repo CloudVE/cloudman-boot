@@ -8,20 +8,23 @@
     msg: "Using rancher pwd {{ rancher_password }}"
     verbosity: 2
 
-- name: Pull and run the Rancher/server container
-  docker_container:
-      name: "{{ rancher_name }}"
-      image: rancher/rancher:{{ rancher_version }}
-      restart_policy: unless-stopped
-      ports:
-        - "{{ rancher_port_http }}:80"
-        - "{{ rancher_port }}:443"
+- name: Create rancher namespace
+  command: >
+    /usr/local/bin/kubectl create namespace cattle-system
+  ignore_errors: true
 
 - debug: msg="Using rancher_server address {{ rancher_server }}"
 
+- name: Helm install Rancher
+  command: >
+    /usr/local/bin/helm upgrade --install rancher rancher-stable/rancher
+    --namespace cattle-system
+    --set hostname={%- if (rancher_server | ipaddr) %}{{ rancher_server }}.xip.io{%- else  %}{{ rancher_server }}{%- endif %}
+    --set ingress.tls.source=rancher
+
 - name: Setup login
   uri:
-    url: "https://{{ rancher_server }}:{{ rancher_port }}/v3-public/localProviders/local?action=login"
+    url: "https://{{ rancher_server }}.xip.io/v3-public/localProviders/local?action=login"
     method: POST
     body_format: json
     body:
@@ -44,7 +47,7 @@
 
 - name: Re-setup login
   uri:
-    url: "https://{{ rancher_server }}:{{ rancher_port }}/v3-public/localProviders/local?action=login"
+    url: "https://{{ rancher_server }}.xip.io/v3-public/localProviders/local?action=login"
     method: POST
     body_format: json
     body:
@@ -64,7 +67,7 @@
 
 - name: Change password
   uri:
-    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/users?action=changepassword
+    url: https://{{ rancher_server }}.xip.io/v3/users?action=changepassword
     method: POST
     body_format: json
     body:
@@ -76,20 +79,20 @@
 
 - name: Configure server URL
   uri:
-    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/settings/server-url
+    url: https://{{ rancher_server }}.xip.io/v3/settings/server-url
     method: PUT
     body_format: json
     body:
       name: server-url
       type: setting
-      value: "https://{{ rancher_server }}:{{ rancher_port }}"
+      value: "https://{{ rancher_server }}.xip.io"
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
 
 - name: Check if cluster already exists
   uri:
-    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/clusters?name={{ cm_cluster_name }}
+    url: https://{{ rancher_server }}.xip.io/v3/clusters?name={{ cm_cluster_name }}
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
@@ -102,7 +105,7 @@
 
 - name: Create a (cloud) cluster
   uri:
-    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/cluster
+    url: https://{{ rancher_server }}.xip.io/v3/cluster
     method: POST
     body_format: json
     body:
@@ -116,7 +119,7 @@
         cloudProvider:
           name: "{{ kube_cloud_provider }}"
           customCloudProvider: |-
-            {{ kube_cloud_conf | b64decode }}
+            {{ kube_cloud_conf }}
         services:
           type: "/v3/schemas/rkeConfigServices"
           kubeApi:
@@ -155,7 +158,7 @@
 
 - name: Create a (local) cluster
   uri:
-    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/cluster
+    url: https://{{ rancher_server }}.xip.io/v3/cluster
     method: POST
     body_format: json
     body:
@@ -215,7 +218,7 @@
 
 - name: Generate cluster registration token and extract node command
   uri:
-    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/clusterregistrationtoken
+    url: https://{{ rancher_server }}.xip.io/v3/clusterregistrationtoken
     method: POST
     body_format: json
     body:
@@ -239,7 +242,7 @@
 
 - name: Get current cluster status
   uri:
-    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/clusters/{{ cluster_id }}
+    url: https://{{ rancher_server }}.xip.io/v3/clusters/{{ cluster_id }}
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
@@ -251,7 +254,7 @@
 
 - name: Wait for the cluster to become active
   uri:
-    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/clusters/{{ cluster_id }}
+    url: https://{{ rancher_server }}.xip.io/v3/clusters/{{ cluster_id }}
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
@@ -259,7 +262,7 @@
 
 - name: Wait for the cluster to become active
   uri:
-    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/clusters/{{ cluster_id }}
+    url: https://{{ rancher_server }}.xip.io/v3/clusters/{{ cluster_id }}
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
@@ -268,88 +271,9 @@
   retries: 50
   delay: 15
 
-- name: Add provider block storage class
-  uri:
-    url: https://{{ rancher_server }}:{{ rancher_port}}/v3/clusters/{{ cluster_id }}/storageclass
-    method: POST
-    body_format: json
-    body:
-      type: "storageClass"
-      name: "ebs"
-      reclaimPolicy: "Delete"
-      allowVolumeExpansion: true
-      provisioner: "kubernetes.io/aws-ebs"
-      parameters:
-        type: "gp2"
-        encrypted: "true"
-    headers:
-      Authorization: Bearer {{ token }}
-    validate_certs: no
-    status_code: 201
-  when: kube_cloud_provider == "aws"
-
-- name: Add provider block storage class
-  uri:
-    url: https://{{ rancher_server }}:{{ rancher_port}}/v3/clusters/{{ cluster_id }}/storageclass
-    method: POST
-    body_format: json
-    body:
-      type: "storageClass"
-      name: "ebs"
-      reclaimPolicy: "Delete"
-      allowVolumeExpansion: true
-      provisioner: "kubernetes.io/azure-disk"
-      parameters:
-        kind: "shared"
-    headers:
-      Authorization: Bearer {{ token }}
-    validate_certs: no
-    status_code: 201
-  when: kube_cloud_provider == "azure"
-
-- name: Add provider block storage class
-  uri:
-    url: https://{{ rancher_server }}:{{ rancher_port}}/v3/clusters/{{ cluster_id }}/storageclass
-    method: POST
-    body_format: json
-    body:
-      type: "storageClass"
-      name: "ebs"
-      reclaimPolicy: "Delete"
-      allowVolumeExpansion: true
-      provisioner: "kubernetes.io/gce-pd"
-      parameters:
-        type: "pd-ssd"
-    headers:
-      Authorization: Bearer {{ token }}
-    validate_certs: no
-    status_code: 201
-  when: kube_cloud_provider == "gce"
-
-- name: Add provider block storage class
-  uri:
-    url: https://{{ rancher_server }}:{{ rancher_port}}/v3/clusters/{{ cluster_id }}/storageclass
-    method: POST
-    body_format: json
-    body:
-      type: "storageClass"
-      name: "ebs"
-      reclaimPolicy: "Delete"
-      allowVolumeExpansion: true
-      provisioner: "kubernetes.io/cinder"
-    headers:
-      Authorization: Bearer {{ token }}
-    validate_certs: no
-    status_code: 201
-  when: kube_cloud_provider == "openstack"
-
-- name: Fallback to hostpath provisioner when no cloud provider is set
-  shell: /usr/local/bin/kubectl apply -f /tmp/cm-boot/roles/rancher/files/hostpath_storage_class.yaml
-  when: not kube_cloud_provider
-
 - name: Get project info
   uri:
-    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/projects?clusterId={{ cluster_id }}
+    url: https://{{ rancher_server }}.xip.io/v3/projects?clusterId={{ cluster_id }}
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
@@ -362,7 +286,7 @@
 
 - name: Check if CloudMan namespace already exists
   uri:
-    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/cluster/{{ cluster_id }}/namespaces?name={{ cm_namespace_name }}
+    url: https://{{ rancher_server }}.xip.io/v3/cluster/{{ cluster_id }}/namespaces?name={{ cm_namespace_name }}
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
@@ -370,7 +294,7 @@
 
 - name: Add CloudMan namespace
   uri:
-    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/clusters/{{ cluster_id }}/namespace
+    url: https://{{ rancher_server }}.xip.io/v3/clusters/{{ cluster_id }}/namespace
     method: POST
     body_format: json
     body:
@@ -385,7 +309,7 @@
 
 - name: Add kube-system namespace to the Default project
   uri:
-    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/cluster/{{ cluster_id }}/namespaces/kube-system
+    url: https://{{ rancher_server }}.xip.io/v3/cluster/{{ cluster_id }}/namespaces/kube-system
     method: PUT
     body_format: json
     body:
@@ -397,23 +321,3 @@
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
-
-- name: Fetch kubectl config from Rancher
-  uri:
-    url: https://{{ rancher_server }}:{{ rancher_port }}/v3/clusters/{{ cluster_id }}?action=generateKubeconfig
-    method: POST
-    headers:
-      Content-Type: application/json
-      Authorization: Bearer {{ token }}
-    validate_certs: False
-  register: kubectl_config
-
-- name: Make sure ~/.kube dir exist
-  file:
-    path: ~/.kube
-    state: directory
-
-- name: Save kubectl config
-  copy:
-    content: "{{ kubectl_config.json.config }}"
-    dest: ~/.kube/config

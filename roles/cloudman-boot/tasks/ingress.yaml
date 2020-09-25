@@ -1,0 +1,22 @@
+- name: Create namespace for nginx ingress
+  command: /usr/local/bin/kubectl create namespace ingress-nginx
+  ignore_errors: True
+
+- name: Add helm repo for nginx ingress
+  shell: /usr/local/bin/helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+  ignore_errors: True
+
+- name: Update helm repo
+  shell: /usr/local/bin/helm repo update
+  ignore_errors: True
+
+- name: Helm install nginx ingress controller
+  command: >
+    /usr/local/bin/helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx
+    --namespace ingress-nginx
+  ignore_errors: true
+
+- name: Fix for issue https://github.com/kubernetes/ingress-nginx/issues/5401
+  command: >
+    kubectl delete -n ingress-nginx -A ValidatingWebhookConfiguration ingress-nginx-admission
+  ignore_errors: true

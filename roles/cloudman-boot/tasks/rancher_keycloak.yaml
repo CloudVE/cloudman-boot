@@ -35,24 +35,43 @@
     method: POST
     body_format: json
     body:
-      clientId: "https://{{ rancher_server }}:{{ rancher_port }}/v1-saml/keycloak/saml/metadata"
+      clientId: "https://{{ rancher_server }}.xip.io/v1-saml/keycloak/saml/metadata"
       name: "rancher"
       protocol: "saml"
       frontchannelLogout: false
-      redirectUris: ["https://{{ rancher_server }}:{{ rancher_port }}/v1-saml/keycloak/saml/acs"]
+      redirectUris: ["https://{{ rancher_server }}.xip.io/v1-saml/keycloak/saml/acs"]
       attributes: { "saml.authnstatement": false, "saml.client.signature": false, "saml.force.post.binding": false, "saml.server.signature": true}
     validate_certs: no
-    status_code: 201
+    status_code: [201, 409]
     headers:
       Authorization: Bearer {{ kc_token }}
     return_content: yes
   register: kc_rancher_client_resp
+  changed_when: kc_rancher_client_resp.status == 201
   retries: 5
   delay: 10
 
+- name: Retrieve existing KeyCloak SAML Client if it's already registered
+  uri:
+    url: "https://{{ rancher_server }}/auth/admin/realms/master/clients?clientId=admin-cli"
+    method: GET
+    validate_certs: no
+    status_code: 200
+    headers:
+      Authorization: Bearer {{ kc_token }}
+    return_content: yes
+  register: kc_rancher_client_existing
+  when: kc_rancher_client_resp.status == 409
+  retries: 2
+  delay: 10
+
+- set_fact:
+    kc_rancher_client_resp: "{{ kc_rancher_client_existing.json[0] }}"
+  when: kc_rancher_client_existing and 'json' in kc_rancher_client_existing
+
 - name: Create cn mapping
   uri:
-    url: "{{ kc_rancher_client_resp.location }}/protocol-mappers/models"
+    url: "https://{{ rancher_server }}/auth/admin/realms/master/clients/{{ kc_rancher_client_resp.id }}/protocol-mappers/models"
     method: POST
     body_format: json
     body:
@@ -65,15 +84,17 @@
       protocol: "saml"
       protocolMapper: "saml-user-property-mapper"
     validate_certs: no
-    status_code: 201
+    status_code: [201, 409]
     headers:
       Authorization: Bearer {{ kc_token }}
+  register: response
+  changed_when: response.status == 201
   retries: 5
   delay: 10
 
 - name: Create uid mapping
   uri:
-    url: "{{ kc_rancher_client_resp.location }}/protocol-mappers/models"
+    url: "https://{{ rancher_server }}/auth/admin/realms/master/clients/{{ kc_rancher_client_resp.id }}/protocol-mappers/models"
     method: POST
     body_format: json
     body:
@@ -86,15 +107,17 @@
       protocol: "saml"
       protocolMapper: "saml-user-property-mapper"
     validate_certs: no
-    status_code: 201
+    status_code: [201, 409]
     headers:
       Authorization: Bearer {{ kc_token }}
+  register: response
+  changed_when: response.status == 201
   retries: 5
   delay: 10
 
 - name: Create displayName mapping
   uri:
-    url: "{{ kc_rancher_client_resp.location }}/protocol-mappers/models"
+    url: "https://{{ rancher_server }}/auth/admin/realms/master/clients/{{ kc_rancher_client_resp.id }}/protocol-mappers/models"
     method: POST
     body_format: json
     body:
@@ -107,15 +130,17 @@
       protocol: "saml"
       protocolMapper: "saml-user-property-mapper"
     validate_certs: no
-    status_code: 201
+    status_code: [201, 409]
     headers:
       Authorization: Bearer {{ kc_token }}
+  register: response
+  changed_when: response.status == 201
   retries: 5
   delay: 10
 
 - name: Create Groups mapping
   uri:
-    url: "{{ kc_rancher_client_resp.location }}/protocol-mappers/models"
+    url: "https://{{ rancher_server }}/auth/admin/realms/master/clients/{{ kc_rancher_client_resp.id }}/protocol-mappers/models"
     method: POST
     body_format: json
     body:
@@ -129,9 +154,11 @@
       protocol: "saml"
       protocolMapper: "saml-group-membership-mapper"
     validate_certs: no
-    status_code: 201
+    status_code: [201, 409]
     headers:
       Authorization: Bearer {{ kc_token }}
+  register: response
+  changed_when: response.status == 201
   retries: 5
   delay: 10
 
@@ -149,31 +176,37 @@
   delay: 10
 
 - name: Generate a key
+  delegate_to: localhost
   openssl_privatekey:
-    path: /tmp/cm-boot/ansible-rancher.pem
+    path: /tmp/ansible-rancher.pem
     size: 2048
+  become: no
 
 - name: Generate CSR
+  delegate_to: localhost
   openssl_csr:
-    path: /tmp/cm-boot/ansible-rancher.csr
-    privatekey_path: /tmp/cm-boot/ansible-rancher.pem
+    path: /tmp/ansible-rancher.csr
+    privatekey_path: /tmp/ansible-rancher.pem
     common_name: ansible-rancher
+  become: no
 
 - name: Generate a Self Signed OpenSSL certificate
+  delegate_to: localhost
   openssl_certificate:
-    path: /tmp/cm-boot/ansible-rancher.crt
-    privatekey_path: /tmp/cm-boot/ansible-rancher.pem
-    csr_path: /tmp/cm-boot/ansible-rancher.csr
+    path: /tmp/ansible-rancher.crt
+    privatekey_path: /tmp/ansible-rancher.pem
+    csr_path: /tmp/ansible-rancher.csr
     provider: selfsigned
+  become: no
 
 - name: Set key and certificate
   set_fact:
-    rancher_key: "{{ lookup('file', '/tmp/cm-boot/ansible-rancher.pem') }}"
-    rancher_cert: "{{ lookup('file', '/tmp/cm-boot/ansible-rancher.crt') }}"
+    rancher_key: "{{ lookup('file', '/tmp/ansible-rancher.pem') }}"
+    rancher_cert: "{{ lookup('file', '/tmp/ansible-rancher.crt') }}"
 
 - name: Login to Rancher
   uri:
-    url: "https://{{ rancher_server }}:{{ rancher_port }}/v3-public/localProviders/local?action=login"
+    url: "https://{{ rancher_server }}.xip.io/v3-public/localProviders/local?action=login"
     method: POST
     body_format: json
     body:
@@ -192,13 +225,13 @@
 
 - name: Setup Rancher External Auth
   uri:
-    url: "https://{{ rancher_server }}:{{ rancher_port }}/v3/keyCloakConfigs/keycloak"
+    url: "https://{{ rancher_server }}.xip.io/v3/keyCloakConfigs/keycloak"
     method: PUT
     validate_certs: no
     body_format: json
     body:
       accessMode: "required"
-      actions: { "disable": "https://{{ rancher_server }}:{{ rancher_port }}/v3/keyCloakConfigs/keycloak?action=disable", "testAndEnable": "https://{{ rancher_server }}:{{ rancher_port }}/v3/keyCloakConfigs/keycloak?action=testAndEnable" }
+      actions: { "disable": "https://{{ rancher_server }}.xip.io/v3/keyCloakConfigs/keycloak?action=disable", "testAndEnable": "https://{{ rancher_server }}.xip.io/v3/keyCloakConfigs/keycloak?action=testAndEnable" }
       allowedPrincipalIds: ["keycloak_user://admin"]
       baseType: "authConfig"
       displayNameField: "displayName"
@@ -206,9 +239,9 @@
       groupsField: "memberOf"
       id: "keycloak"
       idpMetadataContent: '{{ idp_metadata.content | regex_replace("<EntitiesDescriptor ([^>]*)>\s+<EntityDescriptor", "<EntityDescriptor \1") | regex_replace("\n</EntitiesDescriptor>", "") }}'
-      links: { "self": "https://{{ rancher_server }}:{{ rancher_port }}/v3/keyCloakConfigs/keycloak", "update": "https://{{ rancher_server }}:{{ rancher_port }}/v3/keyCloakConfigs/keycloak" }
+      links: { "self": "https://{{ rancher_server }}.xip.io/v3/keyCloakConfigs/keycloak", "update": "https://{{ rancher_server }}.xip.io/v3/keyCloakConfigs/keycloak" }
       name: "keycloak"
-      rancherApiHost: "https://{{ rancher_server }}:{{ rancher_port }}/"
+      rancherApiHost: "https://{{ rancher_server }}.xip.io/"
       spCert: "{{ rancher_cert }}"
       spKey: "{{ rancher_key }}"
       type: "keyCloakConfig"
@@ -221,7 +254,7 @@
 
 - name: Set default Rancher user role to admin
   uri:
-    url: "https://{{ rancher_server }}:{{ rancher_port }}/v3/globalRoles/admin"
+    url: "https://{{ rancher_server }}.xip.io/v3/globalRoles/admin"
     method: PUT
     validate_certs: no
     body_format: json

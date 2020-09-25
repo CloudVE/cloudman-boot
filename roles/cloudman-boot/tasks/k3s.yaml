@@ -1,0 +1,74 @@
+- name: Decide on password
+  set_fact:
+    rancher_password: "{{ random_pwd }}"
+    using_random_pwd: true
+  when: rancher_password == ''
+
+- debug:
+    msg: "Using rancher pwd {{ rancher_password }}"
+    verbosity: 2
+
+- name: Install k3s
+  shell: >
+    curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="{{ k3s_version }}" sh -s - server
+    {%- if not kube_cloud_provider %}--disable-cloud-controller --kubelet-arg="cloud-provider=external"{%- endif %}
+    --disable=traefik
+
+- name: Make sure ~/.kube dir exists
+  file:
+    path: ~/.kube
+    state: directory
+
+- name: Symlink kube config
+  file:
+    src: /etc/rancher/k3s/k3s.yaml
+    dest: ~/.kube/config
+    state: link
+
+- name: Make sure /etc/kubernetes dir exist
+  file:
+    path: /etc/kubernetes
+    state: directory
+
+- name: Create cloud config in /etc/kubernetes
+  copy:
+    content: "{{ kube_cloud_conf }}"
+    dest: /etc/kubernetes/cloud-config
+
+- name: Setup cloud controller secret
+  shell: kubectl create secret -n kube-system generic cloud-config --from-file=cloud.conf=/etc/kubernetes/cloud-config
+  ignore_errors: true
+
+- name: Install AWS Cloud Controller Manager
+  shell: kubectl apply -f {{ item }}
+  with_items:
+    - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/release-1.19/manifests/rbac.yaml
+    - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/release-1.19/manifests/aws-cloud-controller-manager-daemonset.yaml
+  when: kube_cloud_provider == "aws"
+
+- name: Install GCP Cloud Controller Manager
+  shell: kubectl apply -f {{ item }}
+  with_items:
+    - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/release-1.19/manifests/rbac.yaml
+    - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/release-1.19/manifests/aws-cloud-controller-manager-daemonset.yaml
+  when: kube_cloud_provider == "gce"
+
+- name: Install OpenStack Cloud Controller Manager
+  shell: kubectl apply -f {{ item }}
+  with_items:
+    - https://raw.githubusercontent.com/kubernetes/cloud-provider-openstack/master/cluster/addons/rbac/cloud-controller-manager-roles.yaml
+    - https://raw.githubusercontent.com/kubernetes/cloud-provider-openstack/master/cluster/addons/rbac/cloud-controller-manager-role-bindings.yaml
+    - https://raw.githubusercontent.com/kubernetes/cloud-provider-openstack/master/manifests/controller-manager/openstack-cloud-controller-manager-ds.yaml
+  when: kube_cloud_provider == "openstack"
+
+- name: Patch node-selector on AWS because of https://github.com/rancher/k3s/issues/1869
+  shell: |
+    kubectl patch daemonset -n kube-system aws-cloud-controller-manager -p '{"spec": {"template": {"spec": {"nodeSelector": {"node-role.kubernetes.io/master": "true"}}}}}'
+  ignore_errors: true
+  when: kube_cloud_provider == "aws"
+
+- name: Patch node-selector on OpenStack because of https://github.com/rancher/k3s/issues/1869
+  shell: |
+    kubectl patch daemonset -n kube-system openstack-cloud-controller-manager -p '{"spec": {"template": {"spec": {"nodeSelector": {"node-role.kubernetes.io/master": "true"}}}}}'
+  ignore_errors: true
+  when: kube_cloud_provider == "openstack"

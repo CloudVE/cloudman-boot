@@ -1,0 +1,27 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ebs
+{% if kube_cloud_provider == "aws" %}
+provisioner: ebs.csi.aws.com
+parameters:
+  encrypted: "true"
+  type: gp2
+{% elif kube_cloud_provider == "azure" %}
+provisioner: disk.csi.azure.com
+parameters:
+  skuname: StandardSSD_LRS
+{% elif kube_cloud_provider == "openstack" %}
+provisioner: cinder.csi.openstack.org
+parameters:
+  availability: melbourne-qh2
+{% elif kube_cloud_provider == "gce" %}
+provisioner: pd.csi.storage.gke.io
+parameters:
+  type: pd-ssd
+{% else %}
+provisioner: rancher.io/local-path
+{% endif %}
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
