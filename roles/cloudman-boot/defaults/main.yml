@@ -17,17 +17,9 @@ kube_cloud_provider: "{{ lookup('env', 'KUBE_CLOUD_PROVIDER') }}"
 kube_cloud_conf: "{{ lookup('env', 'KUBE_CLOUD_CONF') | b64decode }}"
 
 # Rancher settings
-rancher_name: rancher_server
 rancher_server: "{{ lookup('env', 'RANCHER_SERVER')|default(hostvars[inventory_hostname]['ansible_facts']['default_ipv4']['address'], true) }}"
-rancher_version: v2.2.9
-rancher_admin: admin
+rancher_version: 2.4.8
 rancher_password: "{{ lookup('env', 'RANCHER_PWD') }}"
-# The following variables define roles the master node will take. Values must
-# be either `--etcd`, `--controlplane`, and `--worker` for respective variable
-# or set to a blank value (i.e., ``)
-rancher_master_etcd: "{{ lookup('env', 'RANCHER_MASTER_ETCD')|default('--etcd', true) }}"
-rancher_master_controlplane: "{{ lookup('env', 'RANCHER_MASTER_CONTROLPLANE')|default('--controlplane', true) }}"
-rancher_master_as_worker: "{{ lookup('env', 'RANCHER_MASTER_WORKER')|default('--worker', true) }}"
 
 # Used when no rancher password is specified
 random_pwd: "{{ lookup('password', '/dev/null length=12 chars=ascii_letters,digits') }}"

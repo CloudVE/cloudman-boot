@@ -19,6 +19,7 @@
   command: >
     /usr/local/bin/helm upgrade --install rancher rancher-stable/rancher
     --namespace cattle-system
+    --version {{ rancher_version }}
     --set hostname={%- if (rancher_server | ipaddr) %}{{ rancher_server }}.xip.io{%- else  %}{{ rancher_server }}{%- endif %}
     --set ingress.tls.source=rancher
 
@@ -67,7 +68,7 @@
 
 - name: Change password
   uri:
-    url: https://{{ rancher_server }}.xip.io/v3/users?action=changepassword
+    url: "https://{{ rancher_server }}.xip.io/v3/users?action=changepassword"
     method: POST
     body_format: json
     body:
@@ -79,7 +80,7 @@
 
 - name: Configure server URL
   uri:
-    url: https://{{ rancher_server }}.xip.io/v3/settings/server-url
+    url: "https://{{ rancher_server }}.xip.io/v3/settings/server-url"
     method: PUT
     body_format: json
     body:
@@ -90,9 +91,9 @@
       Authorization: Bearer {{ token }}
     validate_certs: no
 
-- name: Check if cluster already exists
+- name: Fetch existing local k3s cluster
   uri:
-    url: https://{{ rancher_server }}.xip.io/v3/clusters?name={{ cm_cluster_name }}
+    url: "https://{{ rancher_server }}.xip.io/v3/clusters?name={{ cm_cluster_name }}"
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
@@ -101,175 +102,6 @@
 - name: Store existing cluster id
   set_fact:
     cluster_id: "{{ clusters.json.data[0].id }}"
-  when: clusters.json.data | length > 0
-
-- name: Create a (cloud) cluster
-  uri:
-    url: https://{{ rancher_server }}.xip.io/v3/cluster
-    method: POST
-    body_format: json
-    body:
-      type: cluster
-      name: "{{ cm_cluster_name }}"
-      rancherKubernetesEngineConfig:
-        ignoreDockerVersion: true
-        ingress:
-          provider: nginx
-          type: ingressConfig
-        cloudProvider:
-          name: "{{ kube_cloud_provider }}"
-          customCloudProvider: |-
-            {{ kube_cloud_conf }}
-        services:
-          type: "/v3/schemas/rkeConfigServices"
-          kubeApi:
-            type: "/v3/schemas/kubeAPIService"
-            extraArgs:
-              feature-gates: "TTLAfterFinished=true"
-          kubeController:
-            type: "/v3/schemas/kubeControllerService"
-            extraArgs:
-              feature-gates: "TTLAfterFinished=true"
-              # for GCP: https://github.com/projectcalico/canal/issues/74
-              configure-cloud-routes: "{{ true if kube_cloud_provider == 'gce' else false }}"
-          kubelet:
-            type: "/v3/schemas/kubeletService"
-            extraArgs:
-              feature-gates: "TTLAfterFinished=true"
-          kubeproxy:
-            type: "/v3/schemas/kubeproxyService"
-            extraArgs:
-              feature-gates: "TTLAfterFinished=true"
-          scheduler:
-            type: "/v3/schemas/schedulerService"
-            extraArgs:
-              feature-gates: "TTLAfterFinished=true"
-    headers:
-      Authorization: Bearer {{ token }}
-    validate_certs: no
-    status_code: 201
-  register: cluster
-  when: not cluster_id is defined and kube_cloud_provider
-
-- name: Store new cloud cluster id
-  set_fact:
-    cluster_id: "{{ cluster.json.id }}"
-  when: cluster is not skipped
-
-- name: Create a (local) cluster
-  uri:
-    url: https://{{ rancher_server }}.xip.io/v3/cluster
-    method: POST
-    body_format: json
-    body:
-      type: cluster
-      name: "{{ cm_cluster_name }}"
-      rancherKubernetesEngineConfig:
-        ignoreDockerVersion: true
-        ingress:
-          provider: nginx
-          type: ingressConfig
-        services:
-          type: "/v3/schemas/rkeConfigServices"
-          kubeApi:
-            type: "/v3/schemas/kubeAPIService"
-            extraArgs:
-              feature-gates: "TTLAfterFinished=true"
-          kubeController:
-            type: "/v3/schemas/kubeControllerService"
-            extraArgs:
-              feature-gates: "TTLAfterFinished=true"
-          kubelet:
-            type: "/v3/schemas/kubeletService"
-            extraArgs:
-              feature-gates: "TTLAfterFinished=true"
-          kubeproxy:
-            type: "/v3/schemas/kubeproxyService"
-            extraArgs:
-              feature-gates: "TTLAfterFinished=true"
-          scheduler:
-            type: "/v3/schemas/schedulerService"
-            extraArgs:
-              feature-gates: "TTLAfterFinished=true"
-    headers:
-      Authorization: Bearer {{ token }}
-    validate_certs: no
-    status_code: 201
-  register: cluster
-  when: not cluster_id is defined and not kube_cloud_provider
-
-- name: Store new local cluster id
-  set_fact:
-    cluster_id: "{{ cluster.json.id }}"
-  when: cluster is not skipped
-
-# Special handling for AWS
-# https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/aws#tagging-amazon-resources
-# There is a possible race condition here if the cluster initialization completes before the tag
-# is set, which seems unlikely. However, in such an event, we would have to decompose setting the
-# cloudProvider into two steps. First create the cluster without the cloudProvider configured,
-# then, obtain the cluster id and set the instance tag and finally update the cluster again with
-# the correct cloudProvider configured.
-- name: Set aws instance tag
-  script: set_aws_instance_tag.py {{ cluster_id }}
-  environment:
-    CM_INITIAL_CLUSTER_DATA: "{{ cm_initial_cluster_data }}"
-  when: kube_cloud_provider == "aws"
-
-- name: Generate cluster registration token and extract node command
-  uri:
-    url: https://{{ rancher_server }}.xip.io/v3/clusterregistrationtoken
-    method: POST
-    body_format: json
-    body:
-      type: clusterRegistrationToken
-      clusterId: "{{ cluster_id }}"
-    headers:
-      Authorization: Bearer {{ token }}
-    validate_certs: no
-    status_code: 201
-  register: node_command
-
-- name: Extract node command
-  set_fact:
-    node_command: "{{ node_command.json.nodeCommand }}"
-
-- name: Remove sudo from the node command
-  set_fact:
-    node_command: "{{ node_command | replace('sudo ', '') }}"
-
-- debug: msg="Node cmd is {{ node_command }} {{ node_command }} {{ rancher_master_etcd }} {{ rancher_master_controlplane }} {{ rancher_master_as_worker }}"
-
-- name: Get current cluster status
-  uri:
-    url: https://{{ rancher_server }}.xip.io/v3/clusters/{{ cluster_id }}
-    headers:
-      Authorization: Bearer {{ token }}
-    validate_certs: no
-  register: cluster_state1
-
-- name: Add master as a node
-  command: "{{ node_command }} {{ rancher_master_etcd }} {{ rancher_master_controlplane }} {{ rancher_master_as_worker }}"
-  when: cluster_state1.json.state == "provisioning"
-
-- name: Wait for the cluster to become active
-  uri:
-    url: https://{{ rancher_server }}.xip.io/v3/clusters/{{ cluster_id }}
-    headers:
-      Authorization: Bearer {{ token }}
-    validate_certs: no
-  register: cluster_state_dbg
-
-- name: Wait for the cluster to become active
-  uri:
-    url: https://{{ rancher_server }}.xip.io/v3/clusters/{{ cluster_id }}
-    headers:
-      Authorization: Bearer {{ token }}
-    validate_certs: no
-  register: cluster_state2
-  until: '"active" in cluster_state2.json.state'
-  retries: 50
-  delay: 15
 
 - name: Get project info
   uri:

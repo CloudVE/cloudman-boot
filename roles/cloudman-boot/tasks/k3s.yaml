@@ -72,3 +72,12 @@
     kubectl patch daemonset -n kube-system openstack-cloud-controller-manager -p '{"spec": {"template": {"spec": {"nodeSelector": {"node-role.kubernetes.io/master": "true"}}}}}'
   ignore_errors: true
   when: kube_cloud_provider == "openstack"
+
+# Special handling for AWS
+# https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/aws#tagging-amazon-resources
+# TODO: cluster id should be a unique value, instead of local
+- name: Set aws instance tag
+  script: set_aws_instance_tag.py local
+  environment:
+    CM_INITIAL_CLUSTER_DATA: "{{ cm_initial_cluster_data }}"
+  when: kube_cloud_provider == "aws"
