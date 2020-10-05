@@ -65,7 +65,6 @@
     --set persistence.storageClass="ebs"
     --set persistence.size="{{ cm_initial_storage_size }}"
     --set storageClass.create=true
-    --set storageClass.defaultClass=true
     --set storageClass.reclaimPolicy="Delete"
     --set storageClass.allowVolumeExpansion=true
 

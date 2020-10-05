@@ -1,40 +1,64 @@
-FROM ubuntu:18.04
+ARG BASE_IMAGE=ubuntu:20.04
+ARG WORK_DIR=/opt/cm-boot
 
-ENV KUBE_LATEST_VERSION=v1.16.2
-ENV HELM_VERSION=v3.0.2
-ENV HELM_FILENAME=helm-${HELM_VERSION}-linux-amd64.tar.gz
+#=================================
+# STAGE 1
+#=================================
+FROM $BASE_IMAGE as stage1
+
 ENV PYTHONUNBUFFERED 1
 ARG DEBIAN_FRONTEND=noninteractive
+ARG WORK_DIR
 
-RUN echo "===> Installing system packages and docker..." \
+RUN echo "===> Installing system packages..." \
+    && mkdir -p $WORK_DIR \
     && apt-get -qq update && apt-get install -y --no-install-recommends \
+        python3-virtualenv \
+        # Needed to install netaddr
+        gcc \
         curl \
-        docker.io \
+        python3-dev \
         python3-pip \
         python3-setuptools \
     && echo "===> Setup python..."  \
-    # Remove Python 2
-    && apt remove -y python \
-    # Set Python 3 as the default Python installation
-    && update-alternatives --install /usr/bin/python python /usr/bin/python3.6 1 \
-    && pip3 install --no-cache-dir --upgrade pip \
-    # https://github.com/pypa/pip/issues/5221#issuecomment-381568428
-    && hash -r pip \
+    && virtualenv -p python3 --prompt "(cloudman-boot)" $WORK_DIR/venv \
     # pyopenssl needed to generate key/certificate for rancher/keycloak integration
     # netaddr is for ansible's ipaddr module
-    && pip3 install --no-cache-dir ansible docker-py pyopenssl cloudbridge netaddr \
-    && echo "==> Installing latest kubectl and helm..." \
+    && $WORK_DIR/venv/bin/pip3 install --no-cache-dir ansible requests docker pyopenssl cloudbridge netaddr \
+    && apt-get autoremove -y && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/*
+
+
+#=================================
+# STAGE 2
+#=================================
+FROM $BASE_IMAGE
+
+ENV KUBE_LATEST_VERSION=v1.19.0
+ENV K3S_IN_DOCKER=true
+ENV PYTHONUNBUFFERED 1
+ARG DEBIAN_FRONTEND=noninteractive
+ARG WORK_DIR
+
+RUN echo "===> Installing system packages..." \
+    && apt-get -qq update && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        python3-virtualenv \
+        docker.io \
+        # used by helm installer
+        gawk \
+    && echo "==> Installing latest kubectl..." \
     && curl -L https://storage.googleapis.com/kubernetes-release/release/${KUBE_LATEST_VERSION}/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl \
-    && curl -L https://get.helm.sh/${HELM_FILENAME} | tar xz && mv linux-amd64/helm /usr/local/bin/helm && rm -rf linux-amd64 \
     && chmod +x /usr/local/bin/kubectl \
-    && chmod +x /usr/local/bin/helm \
     && apt-get autoremove -y && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* \
-    && mkdir -p /tmp/cm-boot
+    && mkdir -p $WORK_DIR
 
-WORKDIR /tmp/cm-boot
-ADD . /tmp/cm-boot
+COPY --from=stage1 $WORK_DIR $WORK_DIR
+
+WORKDIR /opt/cm-boot
+ADD . $WORK_DIR
 
 ENV ANSIBLE_DEBUG=${ANSIBLE_DEBUG:--v}
-CMD ansible-playbook -i "localhost," -c local playbook.yml --tags cloudman-boot \
-    $ANSIBLE_DEBUG
+CMD bash -c "venv/bin/ansible-playbook -e "ansible_python_interpreter=/opt/cm-boot/venv/bin/python" -i 'localhost,' -c local playbook.yml --tags cloudman-boot $ANSIBLE_DEBUG & wait"

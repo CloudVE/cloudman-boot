@@ -6,7 +6,7 @@
   ignore_errors: True
 
 - name: Add Rancher Helm repo
-  shell: /usr/local/bin/helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
+  shell: /usr/local/bin/helm repo add rancher https://releases.rancher.com/server-charts/stable
   ignore_errors: True
 
 - name: Add wunderio Helm repo for RClone

@@ -13,6 +13,25 @@
     curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="{{ k3s_version }}" sh -s - server
     {%- if not kube_cloud_provider %}--disable-cloud-controller --kubelet-arg="cloud-provider=external"{%- endif %}
     --disable=traefik
+  when: not k3s_in_docker
+
+- name: Make sure rancher data dir /opt/rancher exists
+  file:
+    path: /opt/rancher
+    state: directory
+
+- name: Manually start k3s
+  docker_container:
+      name: "k3s"
+      image: "{{ k3s_container_image }}"
+      command: server --disable=traefik --data-dir /opt/rancher
+      privileged: true
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+        - /etc/rancher:/etc/rancher
+        - /opt/rancher:/opt/rancher
+      network_mode: host
+  when: k3s_in_docker
 
 - name: Make sure ~/.kube dir exists
   file:
@@ -24,6 +43,13 @@
     src: /etc/rancher/k3s/k3s.yaml
     dest: ~/.kube/config
     state: link
+    force: true
+
+- name: Wait for k3s
+  shell: "kubectl get node | grep master"
+  register: kubectl_node_ready
+  until: "' Ready' in kubectl_node_ready.stdout"
+  retries: 10
 
 - name: Make sure /etc/kubernetes dir exist
   file:
