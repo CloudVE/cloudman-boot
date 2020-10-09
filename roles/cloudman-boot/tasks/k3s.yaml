@@ -1,24 +1,25 @@
 - name: Decide on password
   set_fact:
-    rancher_password: "{{ random_pwd }}"
+    cluster_password: "{{ random_pwd }}"
     using_random_pwd: true
-  when: rancher_password == ''
+  when: cluster_password == ''
 
 - debug:
-    msg: "Using rancher pwd {{ rancher_password }}"
+    msg: "Using cluster pwd {{ cluster_password }}"
     verbosity: 2
 
 - name: Install k3s
   shell: >
     curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="{{ k3s_version }}" sh -s - server
     {%- if not kube_cloud_provider %}--disable-cloud-controller --kubelet-arg="cloud-provider=external"{%- endif %}
-    --disable=traefik
+    --disable=traefik --docker
   when: not k3s_in_docker
 
 - name: Make sure rancher data dir /opt/rancher exists
   file:
     path: /opt/rancher
     state: directory
+  when: k3s_in_docker
 
 - name: Manually start k3s
   docker_container:
@@ -60,10 +61,12 @@
   copy:
     content: "{{ kube_cloud_conf }}"
     dest: /etc/kubernetes/cloud-config
+  when: kube_cloud_provider
 
 - name: Setup cloud controller secret
   shell: kubectl create secret -n kube-system generic cloud-config --from-file=cloud.conf=/etc/kubernetes/cloud-config
   ignore_errors: true
+  when: kube_cloud_provider
 
 - name: Install AWS Cloud Controller Manager
   shell: kubectl apply -f {{ item }}

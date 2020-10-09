@@ -74,7 +74,7 @@
     --namespace csi-drivers
     --set storageClass.name="rclone"
     --set params.remote="s3"
-    --set params.remotePath="{{ rancher_server | replace('.', '-') }}-gvl-data"
+    --set params.remotePath="{{ cluster_hostname | replace('.', '-') }}-gvl-data"
     --set params.s3-provider="aws"
     --set params.s3-endpoint="https://s3.{{ (cm_initial_cluster_data | b64decode | from_yaml).cloud_config.target.target_zone.region.region_id }}.amazonaws.com"
     --set params.s3-access-key-id="{{ (cm_initial_cluster_data | b64decode | from_yaml).cloud_config.credentials.aws_access_key }}"
@@ -88,7 +88,7 @@
     --namespace csi-drivers
     --set storageClass.name="rclone"
     --set params.remote="swift"
-    --set params.remotePath="{{ rancher_server | replace('.', '-') }}-gvl-data"
+    --set params.remotePath="{{ cluster_hostname | replace('.', '-') }}-gvl-data"
     --set params.swift-user="{{ (cm_initial_cluster_data | b64decode | from_yaml).cloud_config.credentials.os_username }}"
     --set params.swift-key="{{ (cm_initial_cluster_data | b64decode | from_yaml).cloud_config.credentials.os_password }}"
     --set params.swift-auth="{{ (cm_initial_cluster_data | b64decode | from_yaml).cloud_config.target.target_zone.cloud.auth_url }}"

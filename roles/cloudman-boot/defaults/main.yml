@@ -16,10 +16,13 @@ cm_deployment_name: "{{ lookup('env', 'CM_DEPLOYMENT_NAME') }}"
 kube_cloud_provider: "{{ lookup('env', 'KUBE_CLOUD_PROVIDER') }}"
 kube_cloud_conf: "{{ lookup('env', 'KUBE_CLOUD_CONF') | b64decode }}"
 
+# cluster settings
+cluster_hostname: "{{ lookup('env', 'CLUSTER_HOSTNAME') | default(hostvars[inventory_hostname]['ansible_facts']['default_ipv4']['address'], true) | default(hostvars[inventory_hostname]['ansible_hostname'], true) }}"
+cluster_password: "{{ lookup('env', 'CLUSTER_PASSWORD') }}"
+
 # Rancher settings
-rancher_server: "{{ lookup('env', 'RANCHER_SERVER') | default(hostvars[inventory_hostname]['ansible_facts']['default_ipv4']['address'], true) | default(hostvars[inventory_hostname]['ansible_hostname'], true) }}"
+rancher_hostname: "{%- if (cluster_hostname | ipaddr) %}{{ cluster_hostname }}.xip.io{%- else  %}rancher.{{ cluster_hostname }}{%- endif %}"
 rancher_version: 2.4.8
-rancher_password: "{{ lookup('env', 'RANCHER_PWD') }}"
 
 # Used when no rancher password is specified
 random_pwd: "{{ lookup('password', '/dev/null length=12 chars=ascii_letters,digits') }}"

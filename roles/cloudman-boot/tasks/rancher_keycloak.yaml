@@ -1,6 +1,6 @@
 - name: Compose random pwd access doc
   set_fact:
-    svc_access_line: "Login to any of these services as user 'admin', using password '{{ rancher_password }}'"
+    svc_access_line: "Login to any of these services as user 'admin', using password '{{ cluster_password }}'"
   when: using_random_pwd is defined and using_random_pwd
 
 - name: Compose supplied pwd access doc
@@ -10,14 +10,14 @@
 
 - name: Login to KeyCloak
   uri:
-    url: "https://{{ rancher_server }}/auth/realms/master/protocol/openid-connect/token"
+    url: "https://{{ cluster_hostname }}/auth/realms/master/protocol/openid-connect/token"
     method: POST
     body_format: form-urlencoded
     body:
       client_id: admin-cli
       grant_type: password
       username: admin
-      password: "{{ rancher_password }}"
+      password: "{{ cluster_password }}"
     validate_certs: no
     return_content: yes
   register: kc_login_response
@@ -31,15 +31,15 @@
 
 - name: Create KeyCloak SAML Client
   uri:
-    url: "https://{{ rancher_server }}/auth/admin/realms/master/clients"
+    url: "https://{{ cluster_hostname }}/auth/admin/realms/master/clients"
     method: POST
     body_format: json
     body:
-      clientId: "https://{{ rancher_server }}.xip.io/v1-saml/keycloak/saml/metadata"
+      clientId: "https://{{ rancher_hostname }}/v1-saml/keycloak/saml/metadata"
       name: "rancher"
       protocol: "saml"
       frontchannelLogout: false
-      redirectUris: ["https://{{ rancher_server }}.xip.io/v1-saml/keycloak/saml/acs"]
+      redirectUris: ["https://{{ rancher_hostname }}/v1-saml/keycloak/saml/acs"]
       attributes: { "saml.authnstatement": false, "saml.client.signature": false, "saml.force.post.binding": false, "saml.server.signature": true}
     validate_certs: no
     status_code: [201, 409]
@@ -53,7 +53,7 @@
 
 - name: Retrieve existing KeyCloak SAML Client if it's already registered
   uri:
-    url: "https://{{ rancher_server }}/auth/admin/realms/master/clients?clientId=admin-cli"
+    url: "https://{{ cluster_hostname }}/auth/admin/realms/master/clients?clientId=admin-cli"
     method: GET
     validate_certs: no
     status_code: 200
@@ -71,7 +71,7 @@
 
 - name: Create cn mapping
   uri:
-    url: "https://{{ rancher_server }}/auth/admin/realms/master/clients/{{ kc_rancher_client_resp.id }}/protocol-mappers/models"
+    url: "https://{{ cluster_hostname }}/auth/admin/realms/master/clients/{{ kc_rancher_client_resp.id }}/protocol-mappers/models"
     method: POST
     body_format: json
     body:
@@ -94,7 +94,7 @@
 
 - name: Create uid mapping
   uri:
-    url: "https://{{ rancher_server }}/auth/admin/realms/master/clients/{{ kc_rancher_client_resp.id }}/protocol-mappers/models"
+    url: "https://{{ cluster_hostname }}/auth/admin/realms/master/clients/{{ kc_rancher_client_resp.id }}/protocol-mappers/models"
     method: POST
     body_format: json
     body:
@@ -117,7 +117,7 @@
 
 - name: Create displayName mapping
   uri:
-    url: "https://{{ rancher_server }}/auth/admin/realms/master/clients/{{ kc_rancher_client_resp.id }}/protocol-mappers/models"
+    url: "https://{{ cluster_hostname }}/auth/admin/realms/master/clients/{{ kc_rancher_client_resp.id }}/protocol-mappers/models"
     method: POST
     body_format: json
     body:
@@ -140,7 +140,7 @@
 
 - name: Create Groups mapping
   uri:
-    url: "https://{{ rancher_server }}/auth/admin/realms/master/clients/{{ kc_rancher_client_resp.id }}/protocol-mappers/models"
+    url: "https://{{ cluster_hostname }}/auth/admin/realms/master/clients/{{ kc_rancher_client_resp.id }}/protocol-mappers/models"
     method: POST
     body_format: json
     body:
@@ -165,7 +165,7 @@
 #https://rancher.com/docs/rancher/v2.x/en/admin-settings/authentication/keycloak/#keycloak-6-0-0-idpssodescriptor-missing-from-options
 - name: Get SAML Metadata IDPSSODescriptor
   uri:
-    url: "https://{{ rancher_server }}/auth/realms/master/protocol/saml/descriptor"
+    url: "https://{{ cluster_hostname }}/auth/realms/master/protocol/saml/descriptor"
     method: GET
     validate_certs: no
     headers:
@@ -206,12 +206,12 @@
 
 - name: Login to Rancher
   uri:
-    url: "https://{{ rancher_server }}.xip.io/v3-public/localProviders/local?action=login"
+    url: "https://{{ rancher_hostname }}/v3-public/localProviders/local?action=login"
     method: POST
     body_format: json
     body:
       username: admin
-      password: "{{ rancher_password }}"
+      password: "{{ cluster_password }}"
     validate_certs: no
     status_code: 201
     return_content: yes
@@ -225,13 +225,14 @@
 
 - name: Setup Rancher External Auth
   uri:
-    url: "https://{{ rancher_server }}.xip.io/v3/keyCloakConfigs/keycloak"
+    url: "https://{{ rancher_hostname }}/v3/keyCloakConfigs/keycloak"
     method: PUT
     validate_certs: no
     body_format: json
     body:
       accessMode: "required"
-      actions: { "disable": "https://{{ rancher_server }}.xip.io/v3/keyCloakConfigs/keycloak?action=disable", "testAndEnable": "https://{{ rancher_server }}.xip.io/v3/keyCloakConfigs/keycloak?action=testAndEnable" }
+      actions: { "disable": "https://{{ rancher_hostname }}/v3/keyCloakConfigs/keycloak?action=disable",
+                 "testAndEnable": "https://{{ rancher_hostname }}/v3/keyCloakConfigs/keycloak?action=testAndEnable" }
       allowedPrincipalIds: ["keycloak_user://admin"]
       baseType: "authConfig"
       displayNameField: "displayName"
@@ -239,9 +240,10 @@
       groupsField: "memberOf"
       id: "keycloak"
       idpMetadataContent: '{{ idp_metadata.content | regex_replace("<EntitiesDescriptor ([^>]*)>\s+<EntityDescriptor", "<EntityDescriptor \1") | regex_replace("\n</EntitiesDescriptor>", "") }}'
-      links: { "self": "https://{{ rancher_server }}.xip.io/v3/keyCloakConfigs/keycloak", "update": "https://{{ rancher_server }}.xip.io/v3/keyCloakConfigs/keycloak" }
+      links: { "self": "https://{{ rancher_hostname }}/v3/keyCloakConfigs/keycloak",
+               "update": "https://{{ rancher_hostname }}/v3/keyCloakConfigs/keycloak" }
       name: "keycloak"
-      rancherApiHost: "https://{{ rancher_server }}.xip.io/"
+      rancherApiHost: "https://{{ rancher_hostname }}/"
       spCert: "{{ rancher_cert }}"
       spKey: "{{ rancher_key }}"
       type: "keyCloakConfig"
@@ -254,7 +256,7 @@
 
 - name: Set default Rancher user role to admin
   uri:
-    url: "https://{{ rancher_server }}.xip.io/v3/globalRoles/admin"
+    url: "https://{{ rancher_hostname }}/v3/globalRoles/admin"
     method: PUT
     validate_certs: no
     body_format: json

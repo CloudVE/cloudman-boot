@@ -1,11 +1,11 @@
 - name: Decide on password
   set_fact:
-    rancher_password: "{{ random_pwd }}"
+    cluster_password: "{{ random_pwd }}"
     using_random_pwd: true
-  when: rancher_password == ''
+  when: cluster_password == ''
 
 - debug:
-    msg: "Using rancher pwd {{ rancher_password }}"
+    msg: "Using rancher pwd {{ cluster_password }}"
     verbosity: 2
 
 - name: Create rancher namespace
@@ -13,19 +13,19 @@
     /usr/local/bin/kubectl create namespace cattle-system
   ignore_errors: true
 
-- debug: msg="Using rancher_server address {{ rancher_server }}"
+- debug: msg="Using rancher_hostname - {{ rancher_hostname }}"
 
 - name: Helm install Rancher
   command: >
     /usr/local/bin/helm upgrade --install rancher rancher/rancher
     --namespace cattle-system
     --version {{ rancher_version }}
-    --set hostname={%- if (rancher_server | ipaddr) %}{{ rancher_server }}.xip.io{%- else  %}{{ rancher_server }}{%- endif %}
+    --set hostname={{ rancher_hostname}}
     --set ingress.tls.source=rancher
 
 - name: Setup login
   uri:
-    url: "https://{{ rancher_server }}.xip.io/v3-public/localProviders/local?action=login"
+    url: "https://{{ rancher_hostname }}/v3-public/localProviders/local?action=login"
     method: POST
     body_format: json
     body:
@@ -48,12 +48,12 @@
 
 - name: Re-setup login
   uri:
-    url: "https://{{ rancher_server }}.xip.io/v3-public/localProviders/local?action=login"
+    url: "https://{{ rancher_hostname }}/v3-public/localProviders/local?action=login"
     method: POST
     body_format: json
     body:
       username: admin
-      password: "{{ rancher_password }}"
+      password: "{{ cluster_password }}"
     validate_certs: no
     status_code: 201
     return_content: yes
@@ -62,38 +62,38 @@
 
 - name: Set current admin password
   set_fact:
-    rpwd: "{{ rancher_password }}"
+    rpwd: "{{ cluster_password }}"
     token: "{{ login_response.json.token }}"
   when: rpwd is undefined
 
 - name: Change password
   uri:
-    url: "https://{{ rancher_server }}.xip.io/v3/users?action=changepassword"
+    url: "https://{{ rancher_hostname }}/v3/users?action=changepassword"
     method: POST
     body_format: json
     body:
       currentPassword: "{{ rpwd }}"
-      newPassword: "{{ rancher_password }}"
+      newPassword: "{{ cluster_password }}"
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
 
 - name: Configure server URL
   uri:
-    url: "https://{{ rancher_server }}.xip.io/v3/settings/server-url"
+    url: "https://{{ rancher_hostname }}/v3/settings/server-url"
     method: PUT
     body_format: json
     body:
       name: server-url
       type: setting
-      value: "https://{{ rancher_server }}.xip.io"
+      value: "https://{{ rancher_hostname }}"
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
 
 - name: Fetch existing local k3s cluster
   uri:
-    url: "https://{{ rancher_server }}.xip.io/v3/clusters?name={{ cm_cluster_name }}"
+    url: "https://{{ rancher_hostname }}/v3/clusters?name={{ cm_cluster_name }}"
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
@@ -105,7 +105,7 @@
 
 - name: Get project info
   uri:
-    url: https://{{ rancher_server }}.xip.io/v3/projects?clusterId={{ cluster_id }}
+    url: https://{{ rancher_hostname }}/v3/projects?clusterId={{ cluster_id }}
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
@@ -118,7 +118,7 @@
 
 - name: Check if CloudMan namespace already exists
   uri:
-    url: https://{{ rancher_server }}.xip.io/v3/cluster/{{ cluster_id }}/namespaces?name={{ cm_namespace_name }}
+    url: https://{{ rancher_hostname }}/v3/cluster/{{ cluster_id }}/namespaces?name={{ cm_namespace_name }}
     headers:
       Authorization: Bearer {{ token }}
     validate_certs: no
@@ -126,7 +126,7 @@
 
 - name: Add CloudMan namespace
   uri:
-    url: https://{{ rancher_server }}.xip.io/v3/clusters/{{ cluster_id }}/namespace
+    url: https://{{ rancher_hostname }}/v3/clusters/{{ cluster_id }}/namespace
     method: POST
     body_format: json
     body:
@@ -141,7 +141,7 @@
 
 - name: Add kube-system namespace to the Default project
   uri:
-    url: https://{{ rancher_server }}.xip.io/v3/cluster/{{ cluster_id }}/namespaces/kube-system
+    url: https://{{ rancher_hostname }}/v3/cluster/{{ cluster_id }}/namespaces/kube-system
     method: PUT
     body_format: json
     body:

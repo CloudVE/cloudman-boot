@@ -15,7 +15,7 @@ cloudlaunch:
     rabbitmq:
        rabbitmqErlangCookie: {{ random_alphanumeric(16) }}
     cloudlaunchserver:
-      admin_password: "{{ rancher_password }}"
+      admin_password: "{{ cluster_password }}"
       postgresql:
          postgresqlPassword: {{ random_alphanumeric(16) }}
          postgresqlPostgresPassword: {{ random_alphanumeric(16) }}
@@ -33,16 +33,16 @@ prometheus:
         adminPassword: {{ random_alphanumeric(16) }}
         grafana.ini:
            server:
-              root_url: "https://{{ rancher_server }}/grafana"
+              root_url: "https://{{ cluster_hostname }}/grafana"
            auth.generic_oauth:
-              auth_url: "https://{{ rancher_server }}/auth/realms/master/protocol/openid-connect/auth"
-              token_url: "https://{{ rancher_server }}/auth/realms/master/protocol/openid-connect/token"
-              api_url: "https://{{ rancher_server }}/auth/realms/master/protocol/openid-connect/userinfo"
+              auth_url: "https://{{ cluster_hostname }}/auth/realms/master/protocol/openid-connect/auth"
+              token_url: "https://{{ cluster_hostname }}/auth/realms/master/protocol/openid-connect/token"
+              api_url: "https://{{ cluster_hostname }}/auth/realms/master/protocol/openid-connect/userinfo"
 keycloak:
     keycloak:
-       password: "{{ rancher_password }}"
+       password: "{{ cluster_password }}"
 global:
-    domain: {{ rancher_server }}
+    domain: {{ cluster_hostname }}
 
 {% if cm_helm_values %}
 {{ cm_helm_values | b64decode }}
