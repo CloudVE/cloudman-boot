@@ -22,9 +22,8 @@ RUN echo "===> Installing system packages..." \
         python3-setuptools \
     && echo "===> Setup python..."  \
     && virtualenv -p python3 --prompt "(cloudman-boot)" $WORK_DIR/venv \
-    # pyopenssl needed to generate key/certificate for rancher/keycloak integration
     # netaddr is for ansible's ipaddr module
-    && $WORK_DIR/venv/bin/pip3 install --no-cache-dir ansible requests docker pyopenssl cloudbridge netaddr \
+    && $WORK_DIR/venv/bin/pip3 install --no-cache-dir ansible requests docker cloudbridge netaddr \
     && apt-get autoremove -y && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/*
 

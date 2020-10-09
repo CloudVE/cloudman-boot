@@ -1,8 +1,6 @@
-- name: Setup Rancher
+- name: Setup k3s
   include_tasks: k3s.yaml
   when: cm_cluster_type == 'KUBE_K3S'
-  tags:
-    - rancher
 
 - name: Setup Helm
   include_tasks: helm.yaml
@@ -16,18 +14,9 @@
 - name: Setup common storage providers
   include_tasks: storage.yaml
 
-- name: Setup Rancher
-  include_tasks: rancher.yaml
-
 - name: Setup CloudMan
   include_tasks: cloudman.yaml
   when: cm_skip_cloudman is not defined or not (cm_skip_cloudman|bool)
-
-- name: Setup Rancher Keycloak integration
-  include_tasks: rancher_keycloak.yaml
-  when: cm_cluster_type == 'KUBE_K3S'
-  tags:
-    - rancher
 
 - name: Wait for CloudMan
   include_tasks: finish.yaml
