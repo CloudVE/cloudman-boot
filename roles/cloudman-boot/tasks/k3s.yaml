@@ -46,6 +46,15 @@
     state: link
     force: true
 
+- name: Check whether kubectl exists
+  shell: "which kubectl"
+  register: kubectl_result
+  ignore_errors: true
+
+- name: Fetch kubectl
+  shell: curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl" && chmod +x ./kubectl && sudo mv ./kubectl /usr/local/bin/kubectl
+  when: kubectl_result.rc != 0
+
 - name: Wait for k3s
   shell: "kubectl get node | grep master"
   register: kubectl_node_ready
