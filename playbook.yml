@@ -1,6 +1,5 @@
 - name: Boot CloudMan
   hosts: all
-  become: yes
   roles:
     - role: cloudman-boot
       tags: ["cloudman-boot"]

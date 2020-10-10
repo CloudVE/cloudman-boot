@@ -2,6 +2,8 @@
   apt:
     update_cache: yes
     cache_valid_time: 3600
+  become: yes
 
 - name: install nfs-common (needed for csi mount)
   apt: pkg=nfs-common state=latest
+  become: yes
