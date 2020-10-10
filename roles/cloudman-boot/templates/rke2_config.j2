@@ -1,0 +1,5 @@
+write-kubeconfig-mode: "0644"
+{%- if kube_cloud_provider %}
+cloud-provider-name: {%- if kube_in_tree_provider %}"{{ kube_cloud_provider }}"{%- else %}"external"{%- endif %}
+cloud-provider-config: "/etc/kubernetes/cloud-config"
+{%- endif %}

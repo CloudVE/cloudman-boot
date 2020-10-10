@@ -1,16 +1,17 @@
 - name: Setup system packages
   include_tasks: system.yaml
-  when: not k3s_in_docker
+  when: not rke_in_docker
 
-- name: Setup k3s
-  include_tasks: k3s.yaml
-  when: cm_cluster_type == 'KUBE_K3S'
+- name: Setup rke
+  include_tasks: rke.yaml
+  when: cm_cluster_type == 'KUBE_RKE'
 
 - name: Setup Helm
   include_tasks: helm.yaml
 
 - name: Setup ingress controller
   include_tasks: ingress.yaml
+  when: cm_cluster_type == 'KUBE_K3S'
 
 - name: Setup cert-manager
   include_tasks: certmanager.yaml

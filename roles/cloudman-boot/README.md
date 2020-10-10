@@ -9,4 +9,4 @@ Currently, only Rancher is supported.
 
 Role Variables
 --------------
-cm_cluster_type: KUBE_K3S (only supported value at present)
+cm_cluster_type: KUBE_RKE (only supported value at present)
