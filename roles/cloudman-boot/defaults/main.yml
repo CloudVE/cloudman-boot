@@ -25,6 +25,6 @@ random_pwd: "{{ lookup('password', '/dev/null length=12 chars=ascii_letters,digi
 # Used for generating oidc client secret
 random_client_secret: "{{ lookup('password', '/dev/null length=8 chars=ascii_letters,digits') | lower }}-{{ lookup('password', '/dev/null length=4 chars=ascii_letters,digits') | lower }}-{{ lookup('password', '/dev/null length=4 chars=ascii_letters,digits') | lower }}-{{ lookup('password', '/dev/null length=4 chars=ascii_letters,digits') | lower }}-{{ lookup('password', '/dev/null length=12 chars=ascii_letters,digits') | lower }}"
 
-k3s_version: v1.19.2+k3s1
+k3s_version: "v1.19.2+k3s1"
 k3s_container_image: "rancher/k3s:v1.19.2-k3s1"
 k3s_in_docker: "{{ lookup('env', 'K3S_IN_DOCKER') | default(false, true) }}"

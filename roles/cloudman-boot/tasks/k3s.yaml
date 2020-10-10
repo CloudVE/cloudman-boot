@@ -17,21 +17,27 @@
 
 - name: Make sure rancher data dir /opt/rancher exists
   file:
-    path: /opt/rancher
+    path: /etc/rancher
     state: directory
   when: k3s_in_docker
 
-- name: Manually start k3s
+# xref: https://github.com/rancher/k3s/issues/73
+- name: Start k3s in docker (only when running via cloudman-boot)
   docker_container:
       name: "k3s"
       image: "{{ k3s_container_image }}"
-      command: server --disable=traefik --data-dir /opt/rancher
+      command: server --disable=traefik
+      restart_policy: unless-stopped
       privileged: true
       volumes:
-        - /var/run/docker.sock:/var/run/docker.sock
         - /etc/rancher:/etc/rancher
-        - /opt/rancher:/opt/rancher
+        - /var/lib/rancher/k3s:/var/lib/rancher/k3s:rshared
+        - /var/lib/docker:/var/lib/docker:rshared
+        - /var/run:/var/run
+        - /run:/run
       network_mode: host
+      pid_mode: host
+      ipc_mode: host
   when: k3s_in_docker
 
 - name: Make sure ~/.kube dir exists
@@ -52,7 +58,10 @@
   ignore_errors: true
 
 - name: Fetch kubectl
-  shell: curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl" && chmod +x ./kubectl && sudo mv ./kubectl /usr/local/bin/kubectl
+  shell: >
+    curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
+    && chmod +x ./kubectl
+    && sudo mv ./kubectl /usr/local/bin/kubectl
   when: kubectl_result.rc != 0
 
 - name: Wait for k3s

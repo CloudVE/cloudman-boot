@@ -7,14 +7,9 @@
     src: /tmp/template_cm_chart_values.j2
     dest: /tmp/cm_chart_values.yml
 
-- name: Delete existing CRDs
-  command: "kubectl delete crd {{ item }}"
-  with_items:
-  - prometheusrules.monitoring.coreos.com
-  - servicemonitors.monitoring.coreos.com
-  - alertmanagers.monitoring.coreos.com
-  - prometheuses.monitoring.coreos.com
-  - podmonitors.monitoring.coreos.com
+- name: Create CloudMan namespace
+  command: >
+    /usr/local/bin/kubectl create namespace cloudman
   ignore_errors: true
 
 - name: Helm install CloudMan latest

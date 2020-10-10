@@ -47,6 +47,8 @@ RUN echo "===> Installing system packages..." \
         docker.io \
         # used by helm installer
         gawk \
+        # needed by csi-drivers
+        nfs-common \
     && echo "==> Installing latest kubectl..." \
     && curl -L https://storage.googleapis.com/kubernetes-release/release/${KUBE_LATEST_VERSION}/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl \
     && chmod +x /usr/local/bin/kubectl \

@@ -1,3 +1,7 @@
+- name: Setup system packages
+  include_tasks: system.yaml
+  when: not k3s_in_docker
+
 - name: Setup k3s
   include_tasks: k3s.yaml
   when: cm_cluster_type == 'KUBE_K3S'
