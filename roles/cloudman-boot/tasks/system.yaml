@@ -7,3 +7,8 @@
 - name: install nfs-common (needed for csi mount)
   apt: pkg=nfs-common state=latest
   become: yes
+
+- name: install python3-pip (needed to install cloudbridge for aws)
+  apt: pkg=python3-pip state=latest
+  become: yes
+  when: kube_cloud_provider == "aws"

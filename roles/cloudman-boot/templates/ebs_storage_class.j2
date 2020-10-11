@@ -8,7 +8,7 @@ metadata:
     storageclass.kubernetes.io/is-default-class: "true"
 {% endif %}
 {% if kube_cloud_provider == "aws" %}
-{% if kube_in_tree_provider %}
+{% if kube_in_tree_provider  %}
 provisioner: kubernetes.io/aws-ebs
 {% else %}
 provisioner: ebs.csi.aws.com

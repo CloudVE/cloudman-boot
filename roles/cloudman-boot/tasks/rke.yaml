@@ -29,7 +29,7 @@
     content: "{{ kube_cloud_conf }}"
     dest: /etc/kubernetes/cloud-config
   become: yes
-  when: kube_cloud_provider|bool
+  when: kube_cloud_provider | default(false)
 
 - name: Make sure rancher config dir /etc/rancher/rke2 exists
   file:
@@ -42,6 +42,21 @@
     src: rke2_config.j2
     dest: /etc/rancher/rke2/config.yaml
   become: yes
+
+# Special handling for AWS
+# https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/aws#tagging-amazon-resources
+- name: Install cloudbridge
+  pip:
+    name: cloudbridge
+    state: latest
+  when: kube_cloud_provider == "aws"
+
+# TODO: cluster id should be a unique value, instead of local
+- name: Set aws instance tag
+  script: "set_aws_instance_tag.py '{{ cluster_hostname }}'"
+  environment:
+    CM_INITIAL_CLUSTER_DATA: "{{ cm_initial_cluster_data | to_yaml | b64encode }}"
+  when: kube_cloud_provider == "aws"
 
 - name: Install rke
   shell: >-
@@ -134,17 +149,24 @@
     && sudo mv ./kubectl /usr/local/bin/kubectl
   when: kubectl_result.rc != 0
 
-#- name: Setup cloud controller secret
-#  shell: kubectl create secret -n kube-system generic cloud-config --from-file=cloud.conf=/etc/kubernetes/cloud-config
-#  ignore_errors: true
-#  when: not kube_in_tree_provider and kube_cloud_provider
-#
-#- name: Install AWS Cloud Controller Manager
-#  shell: kubectl apply -f {{ item }}
-#  with_items:
-#    - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/release-1.19/manifests/rbac.yaml
-#    - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/release-1.19/manifests/aws-cloud-controller-manager-daemonset.yaml
-#  when: not kube_in_tree_provider and kube_cloud_provider == "aws"
+- name: Setup cloud controller secret
+  shell: kubectl create secret -n kube-system generic cloud-config --from-file=cloud.conf=/etc/kubernetes/cloud-config
+  ignore_errors: true
+  when: not kube_in_tree_provider and kube_cloud_provider
+
+- name: Install AWS Cloud Controller Manager
+  shell: kubectl apply -f {{ item }}
+  with_items:
+    - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/release-1.19/manifests/rbac.yaml
+    - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/release-1.19/manifests/aws-cloud-controller-manager-daemonset.yaml
+  when: not kube_in_tree_provider and kube_cloud_provider == "aws"
+
+- name: Patch node-selector on AWS because of https://github.com/rancher/k3s/issues/1869
+  shell: |
+    kubectl patch daemonset -n kube-system aws-cloud-controller-manager -p '{"spec": {"template": {"spec": {"nodeSelector": {"node-role.kubernetes.io/master": "true"}}}}}'
+  ignore_errors: true
+  when: not kube_in_tree_provider and kube_cloud_provider == "aws"
+
 #
 #- name: Install GCP Cloud Controller Manager
 #  shell: kubectl apply -f {{ item }}
@@ -161,23 +183,14 @@
 #    - https://raw.githubusercontent.com/kubernetes/cloud-provider-openstack/master/manifests/controller-manager/openstack-cloud-controller-manager-ds.yaml
 #  when: not kube_in_tree_provider and kube_cloud_provider == "openstack"
 #
-#- name: Patch node-selector on AWS because of https://github.com/rancher/k3s/issues/1869
-#  shell: |
-#    kubectl patch daemonset -n kube-system aws-cloud-controller-manager -p '{"spec": {"template": {"spec": {"nodeSelector": {"node-role.kubernetes.io/master": "true"}}}}}'
-#  ignore_errors: true
-#  when: not kube_in_tree_provider and kube_cloud_provider == "aws"
-#
 #- name: Patch node-selector on OpenStack because of https://github.com/rancher/k3s/issues/1869
 #  shell: |
 #    kubectl patch daemonset -n kube-system openstack-cloud-controller-manager -p '{"spec": {"template": {"spec": {"nodeSelector": {"node-role.kubernetes.io/master": "true"}}}}}'
 #  ignore_errors: true
 #  when: not kube_in_tree_provider and kube_cloud_provider == "openstack"
 
-# Special handling for AWS
-# https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/aws#tagging-amazon-resources
-# TODO: cluster id should be a unique value, instead of local
-- name: Set aws instance tag
-  script: set_aws_instance_tag.py local
-  environment:
-    CM_INITIAL_CLUSTER_DATA: "{{ cm_initial_cluster_data | to_yaml | b64encode }}"
-  when: kube_cloud_provider == "aws"
+- name: Wait for kubernetes to be ready
+  shell: "kubectl get node | grep master"
+  register: kubectl_node_ready
+  until: "' Ready' in kubectl_node_ready.stdout"
+  retries: 10
