@@ -29,7 +29,7 @@
     content: "{{ kube_cloud_conf }}"
     dest: /etc/kubernetes/cloud-config
   become: yes
-  when: kube_cloud_provider
+  when: kube_cloud_provider|bool
 
 - name: Make sure rancher config dir /etc/rancher/rke2 exists
   file:
@@ -179,5 +179,5 @@
 - name: Set aws instance tag
   script: set_aws_instance_tag.py local
   environment:
-    CM_INITIAL_CLUSTER_DATA: "{{ cm_initial_cluster_data }}"
+    CM_INITIAL_CLUSTER_DATA: "{{ cm_initial_cluster_data | to_yaml | b64encode }}"
   when: kube_cloud_provider == "aws"

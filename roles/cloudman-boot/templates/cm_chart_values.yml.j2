@@ -45,5 +45,5 @@ global:
     domain: {{ cluster_hostname }}
 
 {% if cm_helm_values %}
-{{ cm_helm_values | b64decode }}
+{{ cm_helm_values }}
 {% endif %}

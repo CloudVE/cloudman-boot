@@ -1,8 +1,8 @@
 # CloudMan settings
 cm_cluster_type: "{{ lookup('env', 'CM_CLUSTER_TYPE') | default('KUBE_RKE', true) }}"
-cm_initial_cluster_data: "{{ lookup('env', 'CM_INITIAL_CLUSTER_DATA') }}"
+cm_initial_cluster_data: "{{ lookup('env', 'CM_INITIAL_CLUSTER_DATA') | b64decode | from_yaml }}"
 cm_initial_storage_size: "{{ lookup('env', 'CM_INITIAL_STORAGE_SIZE') | default('100Gi', true) }}"
-cm_helm_values: "{{ lookup('env', 'CM_HELM_VALUES') }}"
+cm_helm_values: "{{ lookup('env', 'CM_HELM_VALUES') | b64decode | from_yaml }}"
 cm_skip_cloudman: "{{ lookup('env', 'CM_SKIP_CLOUDMAN') | default('false', true) }}"
 cm_cluster_name: local
 cm_namespace_name: cloudman
