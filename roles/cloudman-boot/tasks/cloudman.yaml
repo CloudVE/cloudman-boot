@@ -12,20 +12,12 @@
     /usr/local/bin/kubectl create namespace cloudman
   ignore_errors: true
 
-- name: Helm install CloudMan latest
-  command: >
-    /usr/local/bin/helm upgrade --install cloudman galaxyproject/cloudman
-    --namespace "{{ cm_namespace_name }}"
-    -f /tmp/cm_chart_values.yml
-  ignore_errors: true
-  when: cm_chart_version == ''
-
-
 - name: Helm install CloudMan
   command: >
     /usr/local/bin/helm upgrade --install cloudman galaxyproject/cloudman
     --namespace "{{ cm_namespace_name }}"
+    {% if cm_chart_version %}
     --version "{{ cm_chart_version }}"
+    {% endif %}
     -f /tmp/cm_chart_values.yml
   ignore_errors: true
-  when: cm_chart_version != ''

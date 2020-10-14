@@ -1,0 +1,20 @@
+node-name: "{{ ansible_fqdn }}"
+token: {{ rke_registration_token }}
+
+{% if 'controllers' in group_names %}
+write-kubeconfig-mode: "0600"
+tls-san:
+  - {{ cluster_hostname }}
+{% endif %}
+
+{% if not is_rke_registration_server %}
+server: https://{{ rke_registration_server }}:9345
+{% endif %}
+
+{% if is_rke_registration_server and kube_cloud_provider %}
+cloud-provider-name: "{{ kube_cloud_provider if kube_in_tree_provider else 'external' }}"
+{% if kube_in_tree_provider %}
+cloud-provider-config: "/etc/kubernetes/cloud-config"
+kube-controller-manager-arg: "configure-cloud-routes={{ 'true' if kube_cloud_provider == 'gce' else 'false' }}"
+{% endif %}
+{% endif %}

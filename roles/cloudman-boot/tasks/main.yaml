@@ -1,13 +1,5 @@
-- name: Setup system packages
-  include_tasks: system.yaml
-  when: not rke_in_docker
-
-- name: Setup rke
-  include_tasks: rke.yaml
-  when: cm_cluster_type == 'KUBE_RKE'
-
-- name: Setup Helm
-  include_tasks: helm.yaml
+- name: Setup Helm repos
+  include_tasks: helm_repos.yaml
 
 - name: Setup ingress controller
   include_tasks: ingress.yaml

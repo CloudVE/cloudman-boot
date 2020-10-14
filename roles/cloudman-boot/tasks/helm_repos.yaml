@@ -1,10 +1,3 @@
-- name: Install Helm
-  shell: curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
-
-- name: Add stable Helm repo
-  shell: /usr/local/bin/helm repo add stable https://kubernetes-charts.storage.googleapis.com/
-  ignore_errors: True
-
 - name: Add wunderio Helm repo for RClone
   shell: /usr/local/bin/helm repo add wunderio https://storage.googleapis.com/charts.wdr.io/
   ignore_errors: True

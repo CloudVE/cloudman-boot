@@ -1,5 +1,11 @@
-- name: Boot CloudMan
-  hosts: all
+- name: Setup RKE
+  hosts: rke_cluster
+  roles:
+    - role: rke
+      tags: ["controller", "agent"]
+
+- name: Setup cloudman
+  hosts: controllers[0]
   roles:
     - role: cloudman-boot
-      tags: ["cloudman-boot"]
+      tags: ["cloudman"]

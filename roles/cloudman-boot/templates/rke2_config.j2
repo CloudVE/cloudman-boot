@@ -1,9 +1,0 @@
-write-kubeconfig-mode: "0644"
-{% if kube_cloud_provider %}
-cloud-provider-name: "{{ kube_cloud_provider if kube_in_tree_provider else 'external' }}"
-node-name: "{{ ansible_fqdn }}"
-{% if kube_in_tree_provider %}
-cloud-provider-config: "/etc/kubernetes/cloud-config"
-kube-controller-manager-arg: "configure-cloud-routes={{ 'true' if kube_cloud_provider == 'gce' else 'false' }}"
-{% endif %}
-{% endif %}
