@@ -1,5 +1,5 @@
-#- name: Setup system
-#  include_tasks: system.yaml
+- name: Setup system
+  include_tasks: system.yaml
 
 - name: Run rke common tasks
   include_tasks: common.yaml

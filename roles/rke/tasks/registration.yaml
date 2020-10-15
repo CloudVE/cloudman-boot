@@ -36,3 +36,6 @@
     kubectl patch daemonset -n kube-system openstack-cloud-controller-manager -p '{"spec": {"template": {"spec": {"nodeSelector": {"node-role.kubernetes.io/master": "true"}}}}}'
   ignore_errors: true
   when: not kube_in_tree_provider and kube_cloud_provider == "openstack"
+
+- name: Setup storage
+  include_tasks: storage.yaml

@@ -2,11 +2,11 @@ apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: ebs
-{% if cm_cluster_type != "KUBE_K3S" %}
+{# if cm_cluster_type != "KUBE_RKE" #}
 {# local path provisioner is set as default by k3s when no cloud provider is defined #}
   annotations:
     storageclass.kubernetes.io/is-default-class: "true"
-{% endif %}
+{# endif #}
 {% if kube_cloud_provider == "aws" %}
 {% if kube_in_tree_provider  %}
 provisioner: kubernetes.io/aws-ebs
