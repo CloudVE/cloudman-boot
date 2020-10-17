@@ -14,6 +14,9 @@
   command: >
     /usr/local/bin/helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx
     --namespace ingress-nginx
+    --set controller.kind="DaemonSet"
+    --set controller.hostNetwork=true
+    --set controller.daemonset.useHostPort=true
   ignore_errors: true
 
 - name: Fix for issue https://github.com/kubernetes/ingress-nginx/issues/5401

@@ -3,6 +3,7 @@ token: {{ rke_registration_token }}
 
 {% if 'controllers' in group_names %}
 write-kubeconfig-mode: "0600"
+disable: rke2-ingress-nginx
 tls-san:
   - {{ cluster_hostname }}
 {% endif %}

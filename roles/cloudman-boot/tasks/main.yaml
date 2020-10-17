@@ -3,7 +3,7 @@
 
 - name: Setup ingress controller
   include_tasks: ingress.yaml
-  when: cm_cluster_type == 'KUBE_K3S'
+  when: cm_cluster_type in ('KUBE_RKE', 'KUBE_K3S')
 
 - name: Setup cert-manager
   include_tasks: certmanager.yaml
