@@ -1,37 +1,19 @@
-- name: Create CloudMan chart template file
-  template:
-    src: cm_chart_values.yml.j2
-    dest: /tmp/template_cm_chart_values.j2
-
 - name: Render CloudMan chart custom values file
   template:
-    src: /tmp/template_cm_chart_values.j2
+    src: cm_chart_values.yml.j2
     dest: /tmp/cm_chart_values.yml
 
-- name: Delete existing CRDs
-  command: "kubectl delete crd {{ item }}"
-  with_items:
-  - prometheusrules.monitoring.coreos.com
-  - servicemonitors.monitoring.coreos.com
-  - alertmanagers.monitoring.coreos.com
-  - prometheuses.monitoring.coreos.com
-  - podmonitors.monitoring.coreos.com
-  ignore_errors: true
-
-- name: Helm install CloudMan latest
+- name: Create CloudMan namespace
   command: >
-    /usr/local/bin/helm install cloudman galaxyproject/cloudman
-    --namespace "{{ cm_namespace_name }}"
-    -f /tmp/cm_chart_values.yml
+    /usr/local/bin/kubectl create namespace cloudman
   ignore_errors: true
-  when: cm_chart_version == ''
-
 
 - name: Helm install CloudMan
   command: >
-    /usr/local/bin/helm install cloudman galaxyproject/cloudman
+    /usr/local/bin/helm upgrade --install cloudman galaxyproject/cloudman
     --namespace "{{ cm_namespace_name }}"
+    {% if cm_chart_version %}
     --version "{{ cm_chart_version }}"
+    {% endif %}
     -f /tmp/cm_chart_values.yml
   ignore_errors: true
-  when: cm_chart_version != ''

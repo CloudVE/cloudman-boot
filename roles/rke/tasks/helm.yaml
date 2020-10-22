@@ -1,0 +1,9 @@
+- name: Install Helm
+  shell: "curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash -s - --version '{{ helm_version }}'"
+
+- name: Add stable Helm repo
+  shell: /usr/local/bin/helm repo add stable https://kubernetes-charts.storage.googleapis.com/
+  ignore_errors: True
+
+- name: Update Helm repos
+  shell: /usr/local/bin/helm repo update

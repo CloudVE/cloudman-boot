@@ -18,6 +18,6 @@ parameters:
 | CM_SKIP_CLOUDMAN        | Boot cluster only. Don't install cloudman. | False        |
 | KUBE_CLOUD_PROVIDER     | K8S cloud provider                         |              |
 | KUBE_CLOUD_CONF         | Cloudlaunch cloud config details           |              |
-| RANCHER_SERVER          | Hostname for the server                    |              |
-| RANCHER_PWD             | Login password for rancher                 | Random       |
+| CLUSTER_HOSTNAME        | Hostname for the server                    |              |
+| CLUSTER_PASSWORD        | Login password for the server              | Random       |
 ---------------------------------------------------------------------------------------

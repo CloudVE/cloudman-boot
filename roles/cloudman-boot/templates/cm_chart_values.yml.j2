@@ -11,6 +11,39 @@
   {{- separator.join(parts) -}}
 {%- endmacro %}
 
+cloudlaunch:
+    rabbitmq:
+       rabbitmqErlangCookie: {{ random_alphanumeric(16) }}
+    cloudlaunchserver:
+      admin_password: "{{ cluster_password }}"
+      postgresql:
+         postgresqlPassword: {{ random_alphanumeric(16) }}
+         postgresqlPostgresPassword: {{ random_alphanumeric(16) }}
+influxdb:
+    setDefaultUser:
+        password: {{ random_alphanumeric(16) }}
+prometheus:
+    alertmanager:
+        config:
+            global:
+                http_config:
+                    basic_auth:
+                        password: {{ random_alphanumeric(16) }}
+    grafana:
+        adminPassword: {{ random_alphanumeric(16) }}
+        grafana.ini:
+           server:
+              root_url: "https://{{ cluster_hostname }}/grafana"
+           auth.generic_oauth:
+              auth_url: "https://{{ cluster_hostname }}/auth/realms/master/protocol/openid-connect/auth"
+              token_url: "https://{{ cluster_hostname }}/auth/realms/master/protocol/openid-connect/token"
+              api_url: "https://{{ cluster_hostname }}/auth/realms/master/protocol/openid-connect/userinfo"
+keycloak:
+    keycloak:
+       password: "{{ cluster_password }}"
+global:
+    domain: {{ cluster_hostname }}
+
 {% if cm_helm_values %}
-{{ cm_helm_values | b64decode }}
+{{ cm_helm_values }}
 {% endif %}
