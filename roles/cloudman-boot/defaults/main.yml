@@ -22,3 +22,5 @@ random_client_secret: "{{ lookup('password', '/dev/null length=8 chars=ascii_let
 # ref: https://kubernetes.io/docs/concepts/cluster-administration/cloud-providers/
 kube_cloud_provider: "{{ lookup('env', 'KUBE_CLOUD_PROVIDER') }}"
 kube_cloud_conf: "{{ lookup('env', 'KUBE_CLOUD_CONF') | b64decode }}"
+
+rke_registration_server: "{{ hostvars[groups['controllers'][0]]['ansible_fqdn'] | default(groups['controllers'][0]) }}"

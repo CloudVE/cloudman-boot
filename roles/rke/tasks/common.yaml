@@ -1,7 +1,6 @@
 - name: Determine rke node type
   set_fact:
     rke_node_type: "{{ 'server' if 'controllers' in group_names else 'agent' }}"
-    state: directory
   become: yes
 
 - name: Make sure rancher config dir /etc/rancher/rke2 exists
