@@ -17,7 +17,6 @@
       "There are also these additional services available:"
       "  Keycloak: https://{{ cluster_hostname }}/auth/"
       ""
-      "{{ svc_access_line }}"
+      "{{ svc_access_line | default("", true) }}"
       ""
       "For documentation and information about these services, see http://cloudve.org/"
-

@@ -1,7 +1,13 @@
+- name: Create temp file for cloudman helm values
+  tempfile:
+    state:  file
+    suffix: helmvals
+  register: temp_helmvals
+
 - name: Render CloudMan chart custom values file
   template:
     src: cm_chart_values.yml.j2
-    dest: /tmp/cm_chart_values.yml
+    dest: "{{ temp_helmvals.path }}"
 
 - name: Create CloudMan namespace
   command: >
@@ -15,5 +21,11 @@
     {% if cm_chart_version %}
     --version "{{ cm_chart_version }}"
     {% endif %}
-    -f /tmp/cm_chart_values.yml
+    -f "{{ temp_helmvals.path }}"
   ignore_errors: true
+
+- name: Remove temporary values file
+  file:
+    path: "{{ temp_helmvals.path }}"
+    state: absent
+  when: temp_helmvals.path is defined

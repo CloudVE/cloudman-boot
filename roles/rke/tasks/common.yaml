@@ -21,6 +21,7 @@
   pip:
     name: cloudbridge
     state: latest
+  ignore_errors: true
   when: kube_cloud_provider == "aws"
 
 - name: Set aws instance tag
