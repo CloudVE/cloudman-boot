@@ -23,6 +23,7 @@ rke_in_docker: "{{ lookup('env', 'RKE_IN_DOCKER') | default(false, true) }}"
 rke_registration_server: "{{ hostvars[groups['controllers'][0]]['ansible_fqdn'] | default(groups['controllers'][0]) }}"
 is_rke_registration_server: "{{ rke_registration_server == ansible_fqdn }}"
 rke_registration_token: "{{ random_client_secret }}"
+rke_setup_storage_drivers: true
 
 crictl_version: v1.19.0
 

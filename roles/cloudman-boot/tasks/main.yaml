@@ -10,6 +10,7 @@
 
 - name: Setup common storage providers
   include_tasks: storage.yaml
+  when: rke_setup_storage_drivers
 
 - name: Setup CloudMan
   include_tasks: cloudman.yaml

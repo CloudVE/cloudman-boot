@@ -24,3 +24,4 @@ kube_cloud_provider: "{{ lookup('env', 'KUBE_CLOUD_PROVIDER') }}"
 kube_cloud_conf: "{{ lookup('env', 'KUBE_CLOUD_CONF') | b64decode }}"
 
 rke_registration_server: "{{ hostvars[groups['controllers'][0]]['ansible_fqdn'] | default(groups['controllers'][0]) }}"
+rke_setup_storage_drivers: true

@@ -39,3 +39,4 @@
 
 - name: Setup storage
   include_tasks: storage.yaml
+  when: rke_setup_storage_drivers
