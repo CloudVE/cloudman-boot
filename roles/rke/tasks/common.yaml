@@ -30,7 +30,7 @@
     CM_INITIAL_CLUSTER_DATA: "{{ cm_initial_cluster_data | to_yaml | b64encode }}"
   when: kube_cloud_provider == "aws"
 
-- name: Install rke
+- name: "Install rke node of type: {{ rke_node_type }} with version: {{ rke_version }}"
   shell: >-
     curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION="{{ rke_version }}" INSTALL_RKE2_TYPE="{{ rke_node_type }}" sh -
   become: yes

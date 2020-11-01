@@ -2,7 +2,7 @@
   shell: /usr/local/bin/helm repo add wunderio https://storage.googleapis.com/charts.wdr.io/
   ignore_errors: True
 
-- name: Add CloudVE Helm repo
+- name: "Add CloudVE Helm repo: {{ cm_charts_repo }}"
   shell: /usr/local/bin/helm repo add galaxyproject {{ cm_charts_repo }}
   ignore_errors: True
 
