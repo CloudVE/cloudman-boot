@@ -7,7 +7,7 @@
   until: cm_available['status']|default(0) == 200
   retries: 60
   delay: 10
-  when: cm_skip_cloudman is not defined or not (cm_skip_cloudman|bool)
+  when: (cm_skip_cloudman is not defined or not (cm_skip_cloudman|bool)) and not (cm_skip_wait_till_ready|bool)
 
 - name: System help info
   debug:
