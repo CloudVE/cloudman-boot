@@ -1,0 +1,17 @@
+namespace: cloudman
+name: boot
+version: 1.0.0
+readme: README.md
+authors:
+  - GVL Team (help@usegalaxy.org)
+description: A collection of roles to boot a cloudman cluster
+license:
+  - MIT
+tags:
+  - cloudman
+  - collection
+repository: https://github.com/CloudVE/cloudman-boot
+documentation: https://github.com/CloudVE/cloudman-boot
+homepage: https://github.com/CloudVE/cloudman-boot
+issues: https://github.com/CloudVE/cloudman-boot/issues
+
