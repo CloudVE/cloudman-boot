@@ -17,17 +17,15 @@
 
 # Special handling for AWS
 # https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/aws#tagging-amazon-resources
-- name: Install cloudbridge
+- name: Install boto3
   pip:
-    name: cloudbridge
+    name: boto3
     state: latest
   ignore_errors: true
   when: kube_cloud_provider == "aws"
 
 - name: Set aws instance tag
   script: "set_aws_instance_tag.py '{{ cluster_hostname }}'"
-  environment:
-    CM_INITIAL_CLUSTER_DATA: "{{ cm_initial_cluster_data | to_yaml | b64encode }}"
   when: kube_cloud_provider == "aws"
 
 - name: "Install rke node of type: {{ rke_node_type }} with version: {{ rke_version }}"
