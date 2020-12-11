@@ -1,5 +1,3 @@
-cm_initial_cluster_data: "{{ lookup('env', 'CM_INITIAL_CLUSTER_DATA') | b64decode | from_yaml }}"
-
 # cloud provider for this cluster:
 # ref: https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/
 # ref: https://kubernetes.io/docs/concepts/cluster-administration/cloud-providers/

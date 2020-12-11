@@ -8,7 +8,7 @@
   apt: pkg=nfs-common state=latest
   become: yes
 
-- name: install python3-pip (needed to install cloudbridge for aws)
+- name: install python3-pip (needed to install boto for aws)
   apt: pkg=python3-pip state=latest
   become: yes
   when: kube_cloud_provider == "aws"
