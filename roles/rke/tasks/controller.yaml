@@ -75,4 +75,4 @@
   shell: "kubectl get node | grep {{ ansible_fqdn }}"
   register: kubectl_node_ready
   until: "' Ready' in kubectl_node_ready.stdout"
-  retries: 10
+  retries: 20
