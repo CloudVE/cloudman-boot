@@ -1,7 +1,15 @@
+# This is to prevent error: could not get lock on /var/lib/dpkg/lock
+- name: Wait for any possibly running unattended upgrade to finish
+  raw: systemd-run --property="After=apt-daily.service apt-daily-upgrade.service" --wait /bin/true
+  ignore_errors: true
+
 - name: Update APT cache
   apt:
     update_cache: yes
     cache_valid_time: 3600
+  retries: 30
+  delay: 10
+  ignore_errors: true
   become: yes
 
 - name: install nfs-common (needed for csi mount)
