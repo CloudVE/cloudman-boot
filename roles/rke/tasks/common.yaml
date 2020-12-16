@@ -78,8 +78,9 @@
 - name: Fetch and install crictl
   shell: >-
     curl -L https://github.com/kubernetes-sigs/cri-tools/releases/download/{{ crictl_version }}/crictl-{{ crictl_version }}-linux-amd64.tar.gz --output crictl-{{ crictl_version }}-linux-amd64.tar.gz
-    && sudo tar zxvf crictl-{{ crictl_version }}-linux-amd64.tar.gz -C /usr/local/bin
+    && tar zxvf crictl-{{ crictl_version }}-linux-amd64.tar.gz -C /usr/local/bin
     && rm -f crictl-{{ crictl_version }}-linux-amd64.tar.gz
+  become: yes
   when: crictl_result.rc != 0
 
 - name: Wait for rke to startup
