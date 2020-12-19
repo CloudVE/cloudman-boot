@@ -45,7 +45,7 @@
   when: not kube_in_tree_provider and kube_cloud_provider == "openstack"
 
 - name: Fallback to hostpath provisioner when no cloud provider is set
-  shell: /usr/local/bin/kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.17/deploy/local-path-storage.yaml
+  shell: /usr/local/bin/kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.19/deploy/local-path-storage.yaml
   when: not kube_cloud_provider
 
 - name: Render ebs storage class template
