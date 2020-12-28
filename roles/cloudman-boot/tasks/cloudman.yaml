@@ -16,7 +16,7 @@
 
 - name: Helm install CloudMan
   command: >
-    /usr/local/bin/helm upgrade --install cloudman galaxyproject/cloudman
+    /usr/local/bin/helm upgrade --reset-values --install cloudman galaxyproject/cloudman
     --namespace "{{ cm_namespace_name }}"
     {% if cm_chart_version %}
     --version "{{ cm_chart_version }}"

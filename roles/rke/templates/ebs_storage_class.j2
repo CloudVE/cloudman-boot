@@ -15,7 +15,7 @@ provisioner: ebs.csi.aws.com
 {% endif %}
 parameters:
   encrypted: "true"
-  type: gp3
+  type: gp2
 {% elif kube_cloud_provider == "azure" %}
 {% if kube_in_tree_provider %}
 provisioner: kubernetes.io/azure-disk
