@@ -15,7 +15,6 @@
 - name: install nfs-common (needed for csi mount)
   apt: pkg=nfs-common state=latest
   become: yes
-  ignore_errors: true
 
 - name: install python3-pip (needed to install boto for aws)
   apt: pkg=python3-pip state=latest
