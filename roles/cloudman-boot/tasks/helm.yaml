@@ -1,5 +1,5 @@
 - name: Add stable Helm repo
-  shell: /usr/local/bin/helm repo add stable https://kubernetes-charts.storage.googleapis.com/
+  shell: /usr/local/bin/helm repo add stable https://charts.helm.sh/stable
 
 - name: Add wunderio Helm repo for RClone
   shell: /usr/local/bin/helm repo add wunderio https://storage.googleapis.com/charts.wdr.io/
