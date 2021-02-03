@@ -12,8 +12,12 @@
   include_tasks: storage.yaml
   when: rke_setup_storage_drivers
 
+- name: Setup Rancher
+  include_tasks: rancher.yaml
+
 - name: Setup Keycloak
   include_tasks: auth.yaml
+  tags: auth
 
 - name: Setup CloudMan
   include_tasks: cloudman.yaml

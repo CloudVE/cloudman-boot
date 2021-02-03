@@ -11,12 +11,21 @@ cm_charts_repo: "{{ lookup('env', 'CM_CHARTS_REPO') | default('https://raw.githu
 cm_deployment_name: "{{ lookup('env', 'CM_DEPLOYMENT_NAME') }}"
 cm_skip_wait_till_ready: true
 cm_force_pull_images: false
-# Keycloak operator
-cm_keycloak_operator_version: "{{ lookup('env', 'CM_KEYCLOAK_OPERATOR_VERSION') | default('12.0.2', true) }}"
+cm_validate_certs: "{{ lookup('env', 'CM_VALIDATE_CERTS') | default('no', true) }}"
 
 # cluster settings
 cluster_hostname: "{{ lookup('env', 'CLUSTER_HOSTNAME') | default(inventory_hostname, true) }}"
 cluster_password: "{{ lookup('env', 'CLUSTER_PASSWORD') }}"
+
+# rancher settings
+rancher_hostname: "rancher.{{ cluster_hostname }}{% if cluster_hostname | ipaddr %}.xip.io{% endif %}"
+
+# Keycloak operator
+cm_keycloak_operator_version: "{{ lookup('env', 'CM_KEYCLOAK_OPERATOR_VERSION') | default('latest', true) }}"
+cm_keycloak_namespace: "{{ lookup('env', 'CM_KEYCLOAK_OPERATOR_NAMESPACE') | default('keycloak', true) }}"
+cm_keycloak_realm_name: "{{ lookup('env', 'CM_KEYCLOAK_REALM_NAME') | default('gvl', true) }}"
+cm_keycloak_realm_registration: "{{ lookup('env', 'CM_KEYCLOAK_REALM_REGISTRATION') | default('false', true) }}"
+keycloak_hostname: "auth.{{ cluster_hostname }}{% if cluster_hostname | ipaddr %}.xip.io{% endif %}"
 
 # Used for generating oidc client secret
 random_client_secret: "{{ lookup('password', '/dev/null length=8 chars=ascii_letters,digits') | lower }}-{{ lookup('password', '/dev/null length=4 chars=ascii_letters,digits') | lower }}-{{ lookup('password', '/dev/null length=4 chars=ascii_letters,digits') | lower }}-{{ lookup('password', '/dev/null length=4 chars=ascii_letters,digits') | lower }}-{{ lookup('password', '/dev/null length=12 chars=ascii_letters,digits') | lower }}"

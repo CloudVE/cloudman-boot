@@ -1,0 +1,50 @@
+apiVersion: keycloak.org/v1alpha1
+kind: KeycloakRealm
+metadata:
+  name: gvl-keycloakrealm
+  labels:
+    app: gvl-sso
+spec:
+  realm:
+    id: "{{ cm_keycloak_realm_name }}"
+    realm: "{{ cm_keycloak_realm_name }}"
+    enabled: True
+    bruteForceProtected: true
+    registrationAllowed: {{ cm_keycloak_realm_registration }}
+    registrationEmailAsUsername: true
+    loginWithEmailAllowed: true
+    roles:
+      realm:
+        - name: superuser
+    duplicateEmailsAllowed: false
+    loginTheme: gvltheme
+    accountTheme: gvltheme
+    defaultRoles:
+      - offline_access
+      - uma_authorization
+    users:
+      - username: "admin"
+        firstName: "Cloudman"
+        lastName: "Admin"
+        email: "admin@usegvl.org"
+        enabled: True
+        emailVerified: False
+        credentials:
+          - type: "password"
+            value: "{{ cluster_password }}"
+        realmRoles:
+          - "offline_access"
+          - "uma_authorization"
+          - "superuser"
+        clientRoles:
+          account:
+            - "manage-account"
+            - "view-profile"
+          realm-management:
+            - "manage-users"
+            - "view-users"
+            - "query-users"
+            - "create-client"
+  instanceSelector:
+    matchLabels:
+      app: gvl-sso

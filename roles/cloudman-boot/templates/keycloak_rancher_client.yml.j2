@@ -1,0 +1,113 @@
+apiVersion: keycloak.org/v1alpha1
+kind: KeycloakClient
+metadata:
+  name: rancher-saml-keycloakclient
+  labels:
+    app: gvl-sso
+spec:
+  realmSelector:
+    matchLabels:
+      app: gvl-sso
+  client:
+    clientId: https://{{ rancher_hostname }}/v1-saml/keycloak/saml/metadata
+    protocol: saml
+    enabled: true
+    name: rancher
+    frontchannelLogout: false
+    standardFlowEnabled: true
+    attributes:
+      saml.assertion.signature: "true"
+      saml.multivalued.roles: "false"
+      saml.force.post.binding: "false"
+      saml.encrypt: "false"
+      saml.server.signature: "true"
+      saml.server.signature.keyinfo.ext: "false"
+      exclude.session.state.from.auth.response: "false"
+      saml_force_name_id_format: "false"
+      tls.client.certificate.bound.access.tokens: "false"
+      saml.client.signature: "false"
+      saml.authnstatement: "false"
+      display.on.consent.screen: "false"
+      saml_name_id_format: "username"
+      saml.onetimeuse.condition: "false"
+      saml.signing.certificate: "{{ rancher_key['content'] | b64decode }}"
+      saml.signature.algorithm: "RSA_SHA256"
+      saml.signing.private.key: "{{ rancher_cert['content'] | b64decode }}"
+
+    protocolMappers:
+      - name: role list
+        protocol: saml
+        protocolMapper: saml-role-list-mapper
+        consentRequired: false
+        config:
+          single: "false"
+          attribute.nameformat: Basic
+          attribute.name: Role
+      - name: X500 givenName
+        protocol: saml
+        protocolMapper: saml-user-property-mapper
+        consentRequired: false
+        config:
+          attribute.nameformat: urn:oasis:names:tc:SAML:2.0:attrname-format:uri
+          user.attribute: firstName
+          friendly.name: givenName
+          attribute.name: "urn:oid:2.5.4.42"
+      - name: X500 surname
+        protocol: saml
+        protocolMapper: saml-user-property-mapper
+        consentRequired: false
+        config:
+          attribute.nameformat: urn:oasis:names:tc:SAML:2.0:attrname-format:uri
+          user.attribute: lastName
+          friendly.name: surname
+          attribute.name: "urn:oid:2.5.4.4"
+      - name: X500 email
+        protocol: saml
+        protocolMapper: saml-user-property-mapper
+        consentRequired: false
+        config:
+          attribute.nameformat: "urn:oasis:names:tc:SAML:2.0:attrname-format:uri"
+          user.attribute: email
+          friendly.name: email
+          attribute.name: "urn:oid:1.2.840.113549.1.9.1"
+      - config:
+          user.attribute: "username"
+          friendly.name: ""
+          attribute.name: "cn"
+          attribute.nameformat: "Basic"
+        name: "username to cn"
+        protocol: "saml"
+        protocolMapper: "saml-user-property-mapper"
+        consentRequired: false
+      - config:
+          user.attribute: "username"
+          friendly.name: ""
+          attribute.name: "uid"
+          attribute.nameformat: "Basic"
+        name: "username to uid"
+        protocol: "saml"
+        protocolMapper: "saml-user-property-mapper"
+        consentRequired: false
+      - config:
+          user.attribute: "firstName"
+          friendly.name: ""
+          attribute.name: "displayName"
+          attribute.nameformat: "Basic"
+        name: "firstName to displayName"
+        protocol: "saml"
+        protocolMapper: "saml-user-property-mapper"
+        consentRequired: false
+      - config:
+          attribute.name: "memberOf"
+          attribute.nameformat: "Basic"
+          friendly.name: ""
+          full.path: "false"
+          single: "true"
+        name: "Groups"
+        protocol: "saml"
+        protocolMapper: "saml-group-membership-mapper"
+        consentRequired: false
+
+
+    redirectUris:
+      - https://{{ rancher_hostname }}/v1-saml/keycloak/saml/acs
