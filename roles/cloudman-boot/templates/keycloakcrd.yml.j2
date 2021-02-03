@@ -3,18 +3,15 @@ kind: Keycloak
 metadata:
   name: cloudman-keycloak
   labels:
-    app: sso
+    app: gvl-sso
 spec:
   instances: 1
   extensions:
     - https://github.com/aerogear/keycloak-metrics-spi/releases/download/1.0.4/keycloak-metrics-spi-1.0.4.jar
+    - https://s3.us-east-1.amazonaws.com/cloudve.org/gvl/keycloak/gvltheme-keycloak-12.jar
   externalAccess:
     enabled: True
-{% if cluster_hostname | ipaddr %}
-    host: auth.{{ cluster_hostname }}.xip.io
-{% else %}
-    host: auth.{{ cluster_hostname }}
-{% endif %}
+    host: {{ keycloak_hostname }}
     #tlsTermination: passthrough
   podDisruptionBudget:
     enabled: True
