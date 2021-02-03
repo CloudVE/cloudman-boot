@@ -1,0 +1,32 @@
+- name: Create namespace for keycloak
+  command: /usr/local/bin/kubectl create namespace keycloak
+  ignore_errors: True
+
+- name: Check if keycloak operator is already unarchived
+  stat:
+    path: ~/keycloak-operator-{{ cm_keycloak_operator_version }}
+  register: kc_dir
+
+- name: Download and install operator
+  when: not (kc_dir.stat.exists and kc_dir.stat.isdir)
+  block:
+    - name: Download and unarchive keycloak-operator release
+      ansible.builtin.unarchive:
+        src: https://codeload.github.com/keycloak/keycloak-operator/tar.gz/{{ cm_keycloak_operator_version }}
+        dest: ~/
+        remote_src: yes
+
+    - name: Go to keycloak operator and prepare the cluster resources
+      command: chdir=~/keycloak-operator-{{ cm_keycloak_operator_version }} make cluster/prepare
+
+    - name: Deploy the operator
+      command: /usr/local/bin/kubectl apply -f ~/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/operator.yaml -n keycloak
+
+- name: Render Keycloak instance CRD
+  template:
+    src: keycloakcrd.yml.j2
+    dest: ~/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/cloudman-keycloak.yaml
+
+- name: Apply the rendered Keycloak instance
+  command: /usr/local/bin/kubectl apply -f ~/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/cloudman-keycloak.yaml -n keycloak
+

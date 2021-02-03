@@ -11,6 +11,8 @@ cm_charts_repo: "{{ lookup('env', 'CM_CHARTS_REPO') | default('https://raw.githu
 cm_deployment_name: "{{ lookup('env', 'CM_DEPLOYMENT_NAME') }}"
 cm_skip_wait_till_ready: true
 cm_force_pull_images: false
+# Keycloak operator
+cm_keycloak_operator_version: "{{ lookup('env', 'CM_KEYCLOAK_OPERATOR_VERSION') | default('12.0.2', true) }}"
 
 # cluster settings
 cluster_hostname: "{{ lookup('env', 'CLUSTER_HOSTNAME') | default(inventory_hostname, true) }}"
