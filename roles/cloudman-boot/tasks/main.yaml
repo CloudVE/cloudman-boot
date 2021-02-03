@@ -12,6 +12,9 @@
   include_tasks: storage.yaml
   when: rke_setup_storage_drivers
 
+- name: Setup Keycloak
+  include_tasks: auth.yaml
+
 - name: Setup CloudMan
   include_tasks: cloudman.yaml
   when: cm_skip_cloudman is not defined or not (cm_skip_cloudman|bool)
