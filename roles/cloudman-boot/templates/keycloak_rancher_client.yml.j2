@@ -1,0 +1,26 @@
+apiVersion: keycloak.org/v1alpha1
+kind: KeycloakClient
+metadata:
+  name: rancher-saml-keycloakclient
+  labels:
+    app: sso
+spec:
+  realmSelector:
+    matchLabels:
+      app: sso
+  client:
+{% if cluster_hostname | ipaddr %}
+    clientId: https://rancher.{{ cluster_hostname }}.xip.io/v1-saml/keycloak/saml/metadata
+{% else %}
+    clientId: https://rancher.{{ cluster_hostname }}/v1-saml/keycloak/saml/metadata
+{% endif %}
+    protocol: saml
+    enabled: true
+    name: rancher
+    standardFlowEnabled: true
+    redirectUris:
+{% if cluster_hostname | ipaddr %}
+      - https://rancher.{{ cluster_hostname }}.xip.io/v1-saml/keycloak/saml/acs
+{% else %}
+      - https://rancher.{{ cluster_hostname }}/v1-saml/keycloak/saml/acs
+{% endif %}

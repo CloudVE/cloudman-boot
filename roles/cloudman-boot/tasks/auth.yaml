@@ -30,3 +30,19 @@
 - name: Apply the rendered Keycloak instance
   command: /usr/local/bin/kubectl apply -f ~/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/cloudman-keycloak.yaml -n keycloak
 
+- name: Render GVL Keycloak realm CRD
+  template:
+    src: keycloak_gvl_realm.yml.j2
+    dest: ~/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/gvl-keycloakrealm.yaml
+
+- name: Apply the rendered GVL realm
+  command: /usr/local/bin/kubectl apply -f ~/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/gvl-keycloakrealm.yaml -n keycloak
+
+- name: Render Rancher SAML Client CRD
+  template:
+    src: keycloak_rancher_client.yml.j2
+    dest: ~/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/rancher-saml-keycloakclient.yaml
+
+- name: Apply the rendered Rancher SAML Client
+  command: /usr/local/bin/kubectl apply -f ~/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/rancher-saml-keycloakclient.yaml -n keycloak
+

@@ -1,0 +1,15 @@
+apiVersion: keycloak.org/v1alpha1
+kind: KeycloakRealm
+metadata:
+  name: gvl-keycloakrealm
+  labels:
+    app: sso
+spec:
+  realm:
+    id: "gvl"
+    realm: "gvl"
+    enabled: True
+    displayName: "GVL Realm"
+  instanceSelector:
+    matchLabels:
+      app: sso
