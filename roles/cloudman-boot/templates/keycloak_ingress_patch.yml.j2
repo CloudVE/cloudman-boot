@@ -1,0 +1,9 @@
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    kubernetes.io/tls-acme: "true"
+spec:
+  tls:
+  - hosts:
+      - {{ keycloak_hostname }}
+    secretName: {{ keycloak_hostname | replace('.', '-') }}-key

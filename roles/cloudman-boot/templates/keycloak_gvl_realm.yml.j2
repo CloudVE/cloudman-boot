@@ -3,13 +3,43 @@ kind: KeycloakRealm
 metadata:
   name: gvl-keycloakrealm
   labels:
-    app: sso
+    app: gvl-sso
 spec:
   realm:
-    id: "gvl"
-    realm: "gvl"
+    id: "{{ cm_keycloak_realm_name }}"
+    realm: "{{ cm_keycloak_realm_name }}"
     enabled: True
-    displayName: "GVL Realm"
+    displayName: "Genomics Virtual Lab"
+    bruteForceProtected: true
+    registrationAllowed: {{ cm_keycloak_realm_registration }}
+    registrationEmailAsUsername: true
+    loginWithEmailAllowed: true
+    duplicateEmailsAllowed: false
+    defaultRoles:
+      - offline_access
+      - uma_authorization
+    users:
+      - username: "admin"
+        firstName: "Cloudman"
+        lastName: "Admin"
+        email: "admin@usegvl.org"
+        enabled: True
+        emailVerified: False
+        credentials:
+          - type: "password"
+            value: "{{ cluster_password }}"
+        realmRoles:
+          - "offline_access"
+          - "uma_authorization"
+        clientRoles:
+          account:
+            - "manage-account"
+            - "view-profile"
+          realm-management:
+            - "manage-users"
+            - "view-users"
+            - "query-users"
+            - "create-client"
   instanceSelector:
     matchLabels:
-      app: sso
+      app: gvl-sso

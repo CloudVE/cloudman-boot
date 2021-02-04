@@ -1,0 +1,22 @@
+- name: Create cattle-system namespace
+  command: >
+    /usr/local/bin/kubectl create namespace cattle-system
+  ignore_errors: true
+
+- name: Add rancher Helm repo
+  shell: /usr/local/bin/helm repo add rancher https://releases.rancher.com/server-charts/stable
+  ignore_errors: True
+
+- name: Update Helm repos
+  shell: /usr/local/bin/helm repo update
+
+- name: Helm install rancher
+  command: >
+    /usr/local/bin/helm upgrade --install rancher rancher/rancher
+    -n cattle-system
+    --set hostname={{ rancher_hostname }}
+    --set ingress.tls.source=letsEncrypt
+    --set letsEncrypt.email="admin@cloudve.org"
+    --set letsEncrypt.environment="production"
+    --set letsEncrypt.ingress.class=nginx
+  ignore_errors: true

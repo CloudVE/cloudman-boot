@@ -2,7 +2,7 @@
   uri:
     url: "https://{{ cluster_hostname }}/cloudman/openid/openid/KeyCloak"
     method: GET
-    validate_certs: no
+    validate_certs: "{{ cm_validate_certs }}"
   register: cm_available
   until: cm_available['status']|default(0) == 200
   retries: 60
