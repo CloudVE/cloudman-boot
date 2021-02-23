@@ -2,6 +2,7 @@
 - name: Wait for any possibly running unattended upgrade to finish
   raw: systemd-run --property="After=apt-daily.service apt-daily-upgrade.service" --wait /bin/true
   ignore_errors: true
+  become: yes
 
 - name: Update APT cache
   apt:
