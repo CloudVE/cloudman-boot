@@ -1,3 +1,13 @@
+# This task should be removed in the long run when we have a better
+# build system in place, but for now, force pull in case the tag has
+# changed in docker hub
+- name: Update all images from docker hub
+  shell: >
+    crictl image | awk '{print $1}' | xargs -n 1 crictl pull
+  become: yes
+  when: cm_force_pull_images
+  ignore_errors: true
+
 - name: Create temp file for cloudman helm values
   tempfile:
     state:  file
