@@ -15,14 +15,14 @@ random_pwd: "{{ lookup('password', '/dev/null length=12 chars=ascii_letters,digi
 # Used for generating client secrets
 random_client_secret: "{{ lookup('password', '/dev/null length=8 chars=ascii_letters,digits') | lower }}-{{ lookup('password', '/dev/null length=4 chars=ascii_letters,digits') | lower }}-{{ lookup('password', '/dev/null length=4 chars=ascii_letters,digits') | lower }}-{{ lookup('password', '/dev/null length=4 chars=ascii_letters,digits') | lower }}-{{ lookup('password', '/dev/null length=12 chars=ascii_letters,digits') | lower }}"
 
-rke_version: "v1.19.5+rke2r1"
-rke_container_image: "rancher/rke2-runtime:v1.19.5-rke2r1"
+rke_version: "v1.19.7+rke2r1"
+rke_container_image: "rancher/rke2-runtime:v1.19.7-rke2r1"
 rke_in_docker: "{{ lookup('env', 'RKE_IN_DOCKER') | default(false, true) }}"
 rke_registration_server: "{{ hostvars[groups['controllers'][0]]['ansible_fqdn'] | default(groups['controllers'][0]) }}"
 is_rke_registration_server: "{{ rke_registration_server == ansible_fqdn }}"
 rke_registration_token: "{{ random_client_secret }}"
 rke_setup_storage_drivers: true
 
-crictl_version: v1.19.0
+crictl_version: v1.20.0
 
-helm_version: v3.4.2
+helm_version: v3.5.2
