@@ -22,6 +22,7 @@ rke_registration_server: "{{ hostvars[groups['controllers'][0]]['ansible_fqdn'] 
 is_rke_registration_server: "{{ rke_registration_server == ansible_fqdn }}"
 rke_registration_token: "{{ random_client_secret }}"
 rke_setup_storage_drivers: true
+rke_setup_gpu_drivers: false
 
 crictl_version: v1.20.0
 
