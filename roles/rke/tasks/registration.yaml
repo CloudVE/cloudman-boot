@@ -40,3 +40,7 @@
 - name: Setup storage
   include_tasks: storage.yaml
   when: rke_setup_storage_drivers
+
+- name: Setup GPU
+  include_tasks: gpu.yaml
+  when: rke_setup_gpu_drivers
