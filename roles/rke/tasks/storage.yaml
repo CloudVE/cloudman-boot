@@ -44,8 +44,13 @@
     - https://raw.githubusercontent.com/kubernetes/cloud-provider-openstack/master/manifests/cinder-csi-plugin/csi-cinder-driver.yaml
   when: not kube_in_tree_provider and kube_cloud_provider == "openstack"
 
+- name: Render hostpath storage class template
+  template:
+    src: hostpath_storage_class.yaml.j2
+    dest: /tmp/hostpath_storage_class.yaml
+
 - name: Fallback to hostpath provisioner when no cloud provider is set
-  shell: /usr/local/bin/kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.19/deploy/local-path-storage.yaml
+  shell: /usr/local/bin/kubectl apply -f /tmp/hostpath_storage_class.yaml
   when: not kube_cloud_provider
 
 - name: Render ebs storage class template
