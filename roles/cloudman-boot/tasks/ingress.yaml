@@ -17,8 +17,6 @@
     --set controller.kind="DaemonSet"
     --set controller.hostNetwork=true
     --set controller.daemonset.useHostPort=true
-    --set controller.metrics.enabled=true
-    --set controller.metrics.serviceMonitor.enabled=true
   ignore_errors: true
 
 - name: Fix for issue https://github.com/kubernetes/ingress-nginx/issues/5401
