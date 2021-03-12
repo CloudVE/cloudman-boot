@@ -28,7 +28,7 @@ rke_registration_server: "{{ hostvars[groups['controllers'][0]]['ansible_fqdn'] 
 rke_setup_storage_drivers: true
 
 # If true, configure the cluster to pull from private Docker Hub repos
-config_private_repos: false
+docker_use_private_registry: false
 app_namespace: initial
 registry_server: "https://index.docker.io/v1/"
 registry_username: "{{ lookup('env', 'REGISTRY_USERNAME') }}"
