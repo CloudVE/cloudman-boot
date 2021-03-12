@@ -4,89 +4,83 @@
 
 - name: Check if keycloak operator is already unarchived
   stat:
-    path: /home/ubuntu/keycloak-operator-{{ cm_keycloak_operator_version }}
+    path: /tmp/keycloak-operator-{{ cm_keycloak_operator_version }}
   register: kc_dir
 
 - name: Download and install operator
   when: not (kc_dir.stat.exists and kc_dir.stat.isdir)
   block:
-    - name: Make sure tmp dir /home/ubuntu/ exists
-      file:
-        path: /home/ubuntu/
-        state: directory
-      become: yes
-
     - name: Download and unarchive keycloak-operator release
       ansible.builtin.unarchive:
         src: https://codeload.github.com/keycloak/keycloak-operator/tar.gz/{{ cm_keycloak_operator_version }}
-        dest: /home/ubuntu/
+        dest: /tmp/
         remote_src: yes
 
     - name: Go to keycloak operator and prepare the cluster resources
-      command: chdir=/home/ubuntu/keycloak-operator-{{ cm_keycloak_operator_version }} make cluster/prepare
+      command: chdir=/tmp/keycloak-operator-{{ cm_keycloak_operator_version }} make cluster/prepare
 
     - name: Deploy the operator
-      command: /usr/local/bin/kubectl apply -f /home/ubuntu/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/operator.yaml -n keycloak
+      command: /usr/local/bin/kubectl apply -f /tmp/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/operator.yaml -n keycloak
 
 - name: Render Keycloak instance CRD
   template:
     src: keycloakcrd.yml.j2
-    dest: /home/ubuntu/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/cloudman-keycloak.yaml
+    dest: /tmp/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/cloudman-keycloak.yaml
 
 - name: Apply the rendered Keycloak instance
-  command: /usr/local/bin/kubectl apply -f /home/ubuntu/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/cloudman-keycloak.yaml -n keycloak
+  command: /usr/local/bin/kubectl apply -f /tmp/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/cloudman-keycloak.yaml -n keycloak
 
 - name: Render GVL Keycloak realm CRD
   template:
     src: keycloak_gvl_realm.yml.j2
-    dest: /home/ubuntu/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/gvl-keycloakrealm.yaml
+    dest: /tmp/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/gvl-keycloakrealm.yaml
 
 - name: Apply the rendered GVL realm
-  command: /usr/local/bin/kubectl apply -f /home/ubuntu/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/gvl-keycloakrealm.yaml -n keycloak
+  command: /usr/local/bin/kubectl apply -f /tmp/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/gvl-keycloakrealm.yaml -n keycloak
 
 - name: Generate a key
   openssl_privatekey:
-    path: /home/ubuntu/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/ansible-rancher.pem
+    path: /tmp/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/ansible-rancher.pem
     size: 2048
 
 - name: Generate CSR
   openssl_csr:
-    path: /home/ubuntu/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/ansible-rancher.csr
-    privatekey_path: /home/ubuntu/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/ansible-rancher.pem
+    path: /tmp/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/ansible-rancher.csr
+    privatekey_path: /tmp/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/ansible-rancher.pem
     common_name: ansible-rancher
 
 - name: Generate a Self Signed OpenSSL certificate
   openssl_certificate:
-    path: /home/ubuntu/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/ansible-rancher.crt
-    privatekey_path: /home/ubuntu/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/ansible-rancher.pem
-    csr_path: /home/ubuntu/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/ansible-rancher.csr
+    path: /tmp/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/ansible-rancher.crt
+    privatekey_path: /tmp/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/ansible-rancher.pem
+    csr_path: /tmp/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/ansible-rancher.csr
     provider: selfsigned
 
 - name: Render Keycloak ingress cert patch
   template:
     src: keycloak_ingress_patch.yml.j2
-    dest: /home/ubuntu/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/cloudman-keycloak-ingress-patch.yaml
+    dest: /tmp/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/cloudman-keycloak-ingress-patch.yaml
   tags: auth
 
 - name: Slurp Rancher Cert
   ansible.builtin.slurp:
-    src: "/home/ubuntu/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/ansible-rancher.crt"
+    src: "/tmp/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/ansible-rancher.crt"
   register: rancher_cert
   tags: auth
 
 - name: Slurp Rancher Key
   ansible.builtin.slurp:
-    src: "/home/ubuntu/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/ansible-rancher.pem"
+    src: "/tmp/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/ansible-rancher.pem"
   register: rancher_key
   tags: auth
 
 - name: Render Rancher SAML Client CRD
   template:
     src: keycloak_rancher_client.yml.j2
-    dest: /home/ubuntu/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/rancher-saml-keycloakclient.yaml
+    dest: /tmp/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/rancher-saml-keycloakclient.yaml
 
 - name: Apply the rendered Rancher SAML Client
-  command: /usr/local/bin/kubectl apply -f /home/ubuntu/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/rancher-saml-keycloakclient.yaml -n keycloak
+  command: /usr/local/bin/kubectl apply -f /tmp/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/rancher-saml-keycloakclient.yaml -n keycloak
 
 - name: Login to Rancher
   uri:
@@ -138,7 +132,7 @@
   tags: auth
 
 - name: Patch in the rendered Keycloak ingress cert patch
-  command: /usr/local/bin/kubectl patch ingress keycloak -n keycloak --patch-file /home/ubuntu/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/cloudman-keycloak-ingress-patch.yaml
+  command: /usr/local/bin/kubectl patch ingress keycloak -n keycloak --patch-file /tmp/keycloak-operator-{{ cm_keycloak_operator_version }}/deploy/cloudman-keycloak-ingress-patch.yaml
   tags: auth
 
 - name: Setup Rancher External Auth
