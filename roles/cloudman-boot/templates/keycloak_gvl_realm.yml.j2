@@ -14,6 +14,9 @@ spec:
     registrationAllowed: {{ cm_keycloak_realm_registration }}
     registrationEmailAsUsername: true
     loginWithEmailAllowed: true
+    roles:
+      realm:
+        - name: superuser
     duplicateEmailsAllowed: false
     loginTheme: "gvltheme"
     defaultRoles:
@@ -32,6 +35,7 @@ spec:
         realmRoles:
           - "offline_access"
           - "uma_authorization"
+          - "superuser"
         clientRoles:
           account:
             - "manage-account"
