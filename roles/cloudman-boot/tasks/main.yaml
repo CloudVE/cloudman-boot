@@ -17,8 +17,8 @@
   when: cm_skip_cloudman is not defined or not (cm_skip_cloudman|bool)
 
 - name: Configure private registries
-  include_tasks: private_repos.yml
-  when: config_private_repos
+  include_tasks: private_registries.yml
+  when: docker_use_private_registry
 
 - name: Wait for CloudMan
   include_tasks: finish.yaml

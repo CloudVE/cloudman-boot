@@ -1,0 +1,19 @@
+- name: Create dockerconfigjson
+  shell: >
+    PASSWD=`echo "{{ registry_username }}:{{ registry_password }}" | base64 -i -w 0` &&
+    echo {\"auths\":{\"{{ registry_server }}\":{\"username\":\"{{ registry_username }}\",\"password\":\"{{ registry_password }}\",\"auth\":\"$PASSWD\"}}} | base64 -i -w 0
+  register: dockerconfigjson
+
+- name: Render dockerconfigjson
+  template:
+    src: private_registry_secret.yaml.j2
+    dest: /tmp/dockerconfigjson
+
+- name: Set a secret for a private image registry
+  command: /usr/local/bin/kubectl apply -f /tmp/dockerconfigjson
+
+- name: Allow images from private registries to be pulled
+  command: >
+    /usr/local/bin/kubectl patch sa default -n {{ app_namespace }}
+    -p '"imagePullSecrets": [{"name": "{{ registry_name }}" }]'
+  ignore_errors: true
