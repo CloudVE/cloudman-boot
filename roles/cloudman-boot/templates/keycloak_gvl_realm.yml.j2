@@ -9,7 +9,6 @@ spec:
     id: "{{ cm_keycloak_realm_name }}"
     realm: "{{ cm_keycloak_realm_name }}"
     enabled: True
-    displayName: "Genomics Virtual Lab"
     bruteForceProtected: true
     registrationAllowed: {{ cm_keycloak_realm_registration }}
     registrationEmailAsUsername: true
@@ -18,7 +17,8 @@ spec:
       realm:
         - name: superuser
     duplicateEmailsAllowed: false
-    loginTheme: "gvltheme"
+    loginTheme: gvltheme
+    accountTheme: gvltheme
     defaultRoles:
       - offline_access
       - uma_authorization

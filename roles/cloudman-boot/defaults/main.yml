@@ -21,7 +21,7 @@ cluster_password: "{{ lookup('env', 'CLUSTER_PASSWORD') }}"
 rancher_hostname: "rancher.{{ cluster_hostname }}{% if cluster_hostname | ipaddr %}.xip.io{% endif %}"
 
 # Keycloak operator
-cm_keycloak_operator_version: "{{ lookup('env', 'CM_KEYCLOAK_OPERATOR_VERSION') | default('12.0.2', true) }}"
+cm_keycloak_operator_version: "{{ lookup('env', 'CM_KEYCLOAK_OPERATOR_VERSION') | default('latest', true) }}"
 cm_keycloak_realm_name: "{{ lookup('env', 'CM_KEYCLOAK_REALM_NAME') | default('gvl', true) }}"
 cm_keycloak_realm_registration: "{{ lookup('env', 'CM_KEYCLOAK_REALM_REGISTRATION') | default('false', true) }}"
 keycloak_hostname: "auth.{{ cluster_hostname }}{% if cluster_hostname | ipaddr %}.xip.io{% endif %}"
