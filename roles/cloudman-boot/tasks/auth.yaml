@@ -15,14 +15,14 @@
   block:
     - name: Download and unarchive keycloak-operator release
       ansible.builtin.unarchive:
-        src: https://codeload.github.com/keycloak/keycloak-operator/tar.gz/{{ cm_keycloak_operator_version }}
+        src: https://codeload.github.com/{{ cm_keycloak_operator_fork }}/tar.gz/{{ cm_keycloak_operator_version }}
         dest: /tmp/
         remote_src: yes
       when: not (cm_keycloak_operator_version in ["latest", "master"])
 
     - name: Clone master from github
       ansible.builtin.git:
-        repo: https://github.com/keycloak/keycloak-operator
+        repo: "https://github.com/{{ cm_keycloak_operator_fork }}"
         dest: "{{ kc_path }}"
       when: cm_keycloak_operator_version in ["latest", "master"]
 
