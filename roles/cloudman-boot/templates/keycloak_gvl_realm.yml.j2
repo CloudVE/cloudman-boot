@@ -10,6 +10,7 @@ spec:
     realm: "{{ cm_keycloak_realm_name }}"
     enabled: True
     bruteForceProtected: true
+    displayNameHtml: '<div class="kc-logo-text"><span>Genomics Virtual Lab</span></div>'
     registrationAllowed: {{ cm_keycloak_realm_registration }}
     registrationEmailAsUsername: true
     loginWithEmailAllowed: true
