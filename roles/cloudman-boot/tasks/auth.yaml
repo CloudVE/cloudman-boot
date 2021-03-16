@@ -30,73 +30,67 @@
       command: chdir={{ kc_path }} make cluster/prepare
 
     - name: Deploy the operator
-      command: /usr/local/bin/kubectl apply -f {{ kc_path }}/deploy/operator.yaml -n keycloak
-
-- name: Make sure manifests dir exists
-  file:
-    path: "{{ kc_path }}/deploy/cloudman-boot"
-    state: directory
-  become: yes
+      command: /usr/local/bin/kubectl apply -f {{ kc_path }}/deploy/operator.yaml -n {{ cm_keycloak_namespace }}
 
 - name: Render Keycloak instance CRD
   template:
     src: keycloakcrd.yml.j2
-    dest: "{{ kc_path }}/deploy/cloudman-boot/cloudman-keycloak.yaml"
+    dest: "{{ kc_path }}/deploy/cloudman-keycloak.yaml"
 
 - name: Apply the rendered Keycloak instance
-  command: /usr/local/bin/kubectl apply -f {{ kc_path }}/deploy/cloudman-boot/cloudman-keycloak.yaml -n keycloak
+  command: /usr/local/bin/kubectl apply -f {{ kc_path }}/deploy/cloudman-keycloak.yaml -n {{ cm_keycloak_namespace }}
 
 - name: Render GVL Keycloak realm CRD
   template:
     src: keycloak_gvl_realm.yml.j2
-    dest: "{{ kc_path }}/deploy/cloudman-boot/gvl-keycloakrealm.yaml"
+    dest: "{{ kc_path }}/deploy/gvl-keycloakrealm.yaml"
 
 - name: Apply the rendered GVL realm
-  command: /usr/local/bin/kubectl apply -f {{ kc_path }}/deploy/cloudman-boot/gvl-keycloakrealm.yaml -n keycloak
+  command: /usr/local/bin/kubectl apply -f {{ kc_path }}/deploy/gvl-keycloakrealm.yaml -n {{ cm_keycloak_namespace }}
 
 - name: Generate a key
   openssl_privatekey:
-    path: "{{ kc_path }}/deploy/cloudman-boot/ansible-rancher.pem"
+    path: "{{ kc_path }}/deploy/ansible-rancher.pem"
     size: 2048
 
 - name: Generate CSR
   openssl_csr:
-    path: "{{ kc_path }}/deploy/cloudman-boot/ansible-rancher.csr"
-    privatekey_path: "{{ kc_path }}/deploy/cloudman-boot/ansible-rancher.pem"
+    path: "{{ kc_path }}/deploy/ansible-rancher.csr"
+    privatekey_path: "{{ kc_path }}/deploy/ansible-rancher.pem"
     common_name: ansible-rancher
 
 - name: Generate a Self Signed OpenSSL certificate
   openssl_certificate:
-    path: "{{ kc_path }}/deploy/cloudman-boot/ansible-rancher.crt"
-    privatekey_path: "{{ kc_path }}/deploy/cloudman-boot/ansible-rancher.pem"
-    csr_path: "{{ kc_path }}/deploy/cloudman-boot/ansible-rancher.csr"
+    path: "{{ kc_path }}/deploy/ansible-rancher.crt"
+    privatekey_path: "{{ kc_path }}/deploy/ansible-rancher.pem"
+    csr_path: "{{ kc_path }}/deploy/ansible-rancher.csr"
     provider: selfsigned
 
 - name: Render Keycloak ingress cert patch
   template:
     src: keycloak_ingress_patch.yml.j2
-    dest: "{{ kc_path }}/deploy/cloudman-boot/cloudman-keycloak-ingress-patch.yaml"
+    dest: "{{ kc_path }}/deploy/cloudman-keycloak-ingress-patch.yaml"
   tags: auth
 
 - name: Slurp Rancher Cert
   ansible.builtin.slurp:
-    src: "{{ kc_path }}/deploy/cloudman-boot/ansible-rancher.crt"
+    src: "{{ kc_path }}/deploy/ansible-rancher.crt"
   register: rancher_cert
   tags: auth
 
 - name: Slurp Rancher Key
   ansible.builtin.slurp:
-    src: "{{ kc_path }}/deploy/cloudman-boot/ansible-rancher.pem"
+    src: "{{ kc_path }}/deploy/ansible-rancher.pem"
   register: rancher_key
   tags: auth
 
 - name: Render Rancher SAML Client CRD
   template:
     src: keycloak_rancher_client.yml.j2
-    dest: "{{ kc_path }}/deploy/cloudman-boot/rancher-saml-keycloakclient.yaml"
+    dest: "{{ kc_path }}/deploy/rancher-saml-keycloakclient.yaml"
 
 - name: Apply the rendered Rancher SAML Client
-  command: /usr/local/bin/kubectl apply -f {{ kc_path }}/deploy/cloudman-boot/rancher-saml-keycloakclient.yaml -n keycloak
+  command: /usr/local/bin/kubectl apply -f {{ kc_path }}/deploy/rancher-saml-keycloakclient.yaml -n {{ cm_keycloak_namespace }}
 
 - name: Login to Rancher
   uri:
@@ -148,7 +142,7 @@
   tags: auth
 
 - name: Patch in the rendered Keycloak ingress cert patch
-  command: /usr/local/bin/kubectl patch ingress keycloak -n keycloak --patch-file {{ kc_path }}/deploy/cloudman-boot/cloudman-keycloak-ingress-patch.yaml
+  command: /usr/local/bin/kubectl patch ingress keycloak -n {{ cm_keycloak_namespace }} --patch-file {{ kc_path }}/deploy/cloudman-keycloak-ingress-patch.yaml
   tags: auth
 
 - name: Setup Rancher External Auth
