@@ -19,14 +19,10 @@
     src: cm_chart_values.yml.j2
     dest: "{{ temp_helmvals.path }}"
 
-- name: Create CloudMan namespace
-  command: >
-    /usr/local/bin/kubectl create namespace cloudman
-  ignore_errors: true
-
 - name: Helm install CloudMan
   command: >
     /usr/local/bin/helm upgrade --reset-values --install cloudman galaxyproject/cloudman
+    --create-namespace
     --namespace "{{ cm_namespace_name }}"
     {% if cm_chart_version %}
     --version "{{ cm_chart_version }}"
