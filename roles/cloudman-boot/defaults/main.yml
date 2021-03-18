@@ -27,3 +27,11 @@ kube_cloud_conf: "{{ lookup('env', 'KUBE_CLOUD_CONF') | b64decode }}"
 
 rke_registration_server: "{{ hostvars[groups['controllers'][0]]['ansible_fqdn'] | default(groups['controllers'][0]) }}"
 rke_setup_storage_drivers: true
+
+# If true, configure the cluster to pull from private Docker Hub repos
+docker_use_private_registry: false
+app_namespace: initial
+registry_server: "https://index.docker.io/v1/"
+registry_username: "{{ lookup('env', 'REGISTRY_USERNAME') }}"
+registry_password: "{{ lookup('env', 'REGISTRY_PASSWORD') }}"
+registry_name: "{{ lookup('env', 'REGISTRY_NAME') }}"
