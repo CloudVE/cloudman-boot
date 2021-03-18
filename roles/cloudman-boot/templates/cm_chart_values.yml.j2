@@ -21,7 +21,8 @@ cloudlaunch:
          postgresqlPostgresPassword: {{ random_alphanumeric(16) }}
 influxdb:
     setDefaultUser:
-        password: {{ random_alphanumeric(16) }}
+        user:
+            password: {{ random_alphanumeric(16) }}
 prometheus:
     alertmanager:
         config:
