@@ -48,145 +48,153 @@
 - name: Apply the rendered GVL realm
   command: /usr/local/bin/kubectl apply -f {{ kc_path }}/deploy/gvl-keycloakrealm.yaml -n {{ cm_keycloak_namespace }}
 
-- name: Generate a key
-  openssl_privatekey:
-    path: "{{ kc_path }}/deploy/ansible-rancher.pem"
-    size: 2048
-
-- name: Generate CSR
-  openssl_csr:
-    path: "{{ kc_path }}/deploy/ansible-rancher.csr"
-    privatekey_path: "{{ kc_path }}/deploy/ansible-rancher.pem"
-    common_name: ansible-rancher
-
-- name: Generate a Self Signed OpenSSL certificate
-  openssl_certificate:
-    path: "{{ kc_path }}/deploy/ansible-rancher.crt"
-    privatekey_path: "{{ kc_path }}/deploy/ansible-rancher.pem"
-    csr_path: "{{ kc_path }}/deploy/ansible-rancher.csr"
-    provider: selfsigned
-
 - name: Render Keycloak ingress cert patch
   template:
     src: keycloak_ingress_patch.yml.j2
     dest: "{{ kc_path }}/deploy/cloudman-keycloak-ingress-patch.yaml"
   tags: auth
 
-- name: Slurp Rancher Cert
-  ansible.builtin.slurp:
-    src: "{{ kc_path }}/deploy/ansible-rancher.crt"
-  register: rancher_cert
-  tags: auth
-
-- name: Slurp Rancher Key
-  ansible.builtin.slurp:
-    src: "{{ kc_path }}/deploy/ansible-rancher.pem"
-  register: rancher_key
-  tags: auth
-
-- name: Render Rancher SAML Client CRD
-  template:
-    src: keycloak_rancher_client.yml.j2
-    dest: "{{ kc_path }}/deploy/rancher-saml-keycloakclient.yaml"
-
-- name: Apply the rendered Rancher SAML Client
-  command: /usr/local/bin/kubectl apply -f {{ kc_path }}/deploy/rancher-saml-keycloakclient.yaml -n {{ cm_keycloak_namespace }}
-
-- name: Login to Rancher
-  uri:
-    url: "https://{{ rancher_hostname }}/v3-public/localProviders/local?action=login"
-    method: POST
-    body_format: json
-    body:
-      username: admin
-      password: "admin"
-    validate_certs: "{{ cm_validate_certs }}"
-    status_code: 201
-    return_content: yes
-  register: rancher_login
-  retries: 80
-  delay: 5
-  until: rancher_login['status']|default(0) in [200, 201]
-  tags: auth
-
-- name: Set Rancher admin Token and user id
-  set_fact:
-    ra_token: "{{ rancher_login.json.token }}"
-    ra_admin_user_id: "{{ rancher_login.json.userId }}"
-  tags: auth
-
-- name: Change password for admin user
-  uri:
-    url: https://{{ rancher_hostname }}/v3/users?action=changepassword
-    method: POST
-    validate_certs: "{{ cm_validate_certs }}"
-    body_format: json
-    body:
-      currentPassword: "admin"
-      newPassword: "{{ cluster_password }}"
-    headers:
-      Authorization: Bearer {{ ra_token }}
-  tags: auth
-
-#https://rancher.com/docs/rancher/v2.x/en/admin-settings/authentication/keycloak/#keycloak-6-0-0-idpssodescriptor-missing-from-options
-- name: Get SAML Metadata IDPSSODescriptor
-  uri:
-    url: "https://{{ keycloak_hostname }}/auth/realms/{{ cm_keycloak_realm_name }}/protocol/saml/descriptor"
-    method: GET
-    validate_certs: "{{ cm_validate_certs }}"
-    return_content: yes
-  register: idp_metadata
-  retries: 80
-  delay: 5
-  until: idp_metadata['status']|default(0) == 200
-  tags: auth
-
 - name: Patch in the rendered Keycloak ingress cert patch
   command: /usr/local/bin/kubectl patch ingress keycloak -n {{ cm_keycloak_namespace }} --patch-file {{ kc_path }}/deploy/cloudman-keycloak-ingress-patch.yaml
   tags: auth
 
-- name: Setup Rancher External Auth
-  uri:
-    url: "https://{{ rancher_hostname }}/v3/keyCloakConfigs/keycloak"
-    method: PUT
-    validate_certs: "{{ cm_validate_certs }}"
-    body_format: json
-    body:
-      accessMode: "required"
-      actions: { "disable": "https://{{ rancher_hostname }}/v3/keyCloakConfigs/keycloak?action=disable", "testAndEnable": "https://{{ rancher_hostname }}/v3/keyCloakConfigs/keycloak?action=testAndEnable" }
-      allowedPrincipalIds: ["keycloak_user://admin"]
-      baseType: "authConfig"
-      displayNameField: "displayName"
-      enabled: true
-      groupsField: "memberOf"
-      id: "keycloak"
-      idpMetadataContent: '{{ idp_metadata.content | regex_replace("<md:EntitiesDescriptor ([^>]*)>\s*<md:EntityDescriptor", "<md:EntityDescriptor \1") | regex_replace("\n*</md:EntitiesDescriptor>", "") }}'
-      links: { "self": "https://{{ rancher_hostname }}/v3/keyCloakConfigs/keycloak", "update": "https://{{ rancher_hostname }}/v3/keyCloakConfigs/keycloak" }
-      name: "keycloak"
-      rancherApiHost: "https://{{ rancher_hostname }}/"
-      spCert: "{{ rancher_cert['content'] | b64decode }}"
-      spKey: "{{ rancher_key['content'] | b64decode }}"
-      type: "keyCloakConfig"
-      uidField: "uid"
-      userNameField: "cn"
-    headers:
-      Authorization: Bearer {{ ra_token }}
-  retries: 5
-  delay: 10
-  tags: auth
+- name: Check if Rancher SAML Client CRD is already rendered
+  stat:
+    path: "{{ kc_path }}/deploy/rancher-saml-keycloakclient.yaml"
+  register: rancher_crd
 
-- name: Set default Rancher user role to admin
-  uri:
-    url: "https://{{ rancher_hostname }}/v3/globalRoles/admin"
-    method: PUT
-    validate_certs: "{{ cm_validate_certs }}"
-    body_format: json
-    body:
-      newUserDefault: true
-    headers:
-      Authorization: Bearer {{ ra_token }}
-  retries: 5
-  delay: 10
-  tags: auth
+- name: Generate certs, Rancher SAML Client CRD, and change default rancher local password
+  when: not rancher_crd.stat.exists
+  block:
+    - name: Generate a key
+      openssl_privatekey:
+        path: "{{ kc_path }}/deploy/ansible-rancher.pem"
+        size: 2048
+
+    - name: Generate CSR
+      openssl_csr:
+        path: "{{ kc_path }}/deploy/ansible-rancher.csr"
+        privatekey_path: "{{ kc_path }}/deploy/ansible-rancher.pem"
+        common_name: ansible-rancher
+
+    - name: Generate a Self Signed OpenSSL certificate
+      openssl_certificate:
+        path: "{{ kc_path }}/deploy/ansible-rancher.crt"
+        privatekey_path: "{{ kc_path }}/deploy/ansible-rancher.pem"
+        csr_path: "{{ kc_path }}/deploy/ansible-rancher.csr"
+        provider: selfsigned
+
+    - name: Slurp Rancher Cert
+      ansible.builtin.slurp:
+        src: "{{ kc_path }}/deploy/ansible-rancher.crt"
+      register: rancher_cert
+      tags: auth
+
+    - name: Slurp Rancher Key
+      ansible.builtin.slurp:
+        src: "{{ kc_path }}/deploy/ansible-rancher.pem"
+      register: rancher_key
+      tags: auth
+
+    - name: Render Rancher SAML Client CRD
+      template:
+        src: keycloak_rancher_client.yml.j2
+        dest: "{{ kc_path }}/deploy/rancher-saml-keycloakclient.yaml"
+
+    - name: Apply the rendered Rancher SAML Client
+      command: /usr/local/bin/kubectl apply -f {{ kc_path }}/deploy/rancher-saml-keycloakclient.yaml -n {{ cm_keycloak_namespace }}
+
+    - name: Login to Rancher
+      uri:
+        url: "https://{{ rancher_hostname }}/v3-public/localProviders/local?action=login"
+        method: POST
+        body_format: json
+        body:
+          username: admin
+          password: "admin"
+        validate_certs: "{{ cm_validate_certs }}"
+        status_code: 201
+        return_content: yes
+      register: rancher_login
+      retries: 80
+      delay: 5
+      until: rancher_login['status']|default(0) in [200, 201]
+      tags: auth
+
+    - name: Set Rancher admin Token and user id
+      set_fact:
+        ra_token: "{{ rancher_login.json.token }}"
+        ra_admin_user_id: "{{ rancher_login.json.userId }}"
+      tags: auth
+
+    - name: Change password for admin user
+      uri:
+        url: https://{{ rancher_hostname }}/v3/users?action=changepassword
+        method: POST
+        validate_certs: "{{ cm_validate_certs }}"
+        body_format: json
+        body:
+          currentPassword: "admin"
+          newPassword: "{{ cluster_password }}"
+        headers:
+          Authorization: Bearer {{ ra_token }}
+      tags: auth
+
+    #https://rancher.com/docs/rancher/v2.x/en/admin-settings/authentication/keycloak/#keycloak-6-0-0-idpssodescriptor-missing-from-options
+    - name: Get SAML Metadata IDPSSODescriptor
+      uri:
+        url: "https://{{ keycloak_hostname }}/auth/realms/{{ cm_keycloak_realm_name }}/protocol/saml/descriptor"
+        method: GET
+        validate_certs: "{{ cm_validate_certs }}"
+        return_content: yes
+      register: idp_metadata
+      retries: 80
+      delay: 5
+      until: idp_metadata['status']|default(0) == 200
+      tags: auth
+
+    - name: Setup Rancher External Auth
+      uri:
+        url: "https://{{ rancher_hostname }}/v3/keyCloakConfigs/keycloak"
+        method: PUT
+        validate_certs: "{{ cm_validate_certs }}"
+        body_format: json
+        body:
+          accessMode: "required"
+          actions: { "disable": "https://{{ rancher_hostname }}/v3/keyCloakConfigs/keycloak?action=disable", "testAndEnable": "https://{{ rancher_hostname }}/v3/keyCloakConfigs/keycloak?action=testAndEnable" }
+          allowedPrincipalIds: ["keycloak_user://admin"]
+          baseType: "authConfig"
+          displayNameField: "displayName"
+          enabled: true
+          groupsField: "memberOf"
+          id: "keycloak"
+          idpMetadataContent: '{{ idp_metadata.content | regex_replace("<md:EntitiesDescriptor ([^>]*)>\s*<md:EntityDescriptor", "<md:EntityDescriptor \1") | regex_replace("\n*</md:EntitiesDescriptor>", "") }}'
+          links: { "self": "https://{{ rancher_hostname }}/v3/keyCloakConfigs/keycloak", "update": "https://{{ rancher_hostname }}/v3/keyCloakConfigs/keycloak" }
+          name: "keycloak"
+          rancherApiHost: "https://{{ rancher_hostname }}/"
+          spCert: "{{ rancher_cert['content'] | b64decode }}"
+          spKey: "{{ rancher_key['content'] | b64decode }}"
+          type: "keyCloakConfig"
+          uidField: "uid"
+          userNameField: "cn"
+        headers:
+          Authorization: Bearer {{ ra_token }}
+      retries: 5
+      delay: 10
+      tags: auth
+
+    - name: Set default Rancher user role to admin
+      uri:
+        url: "https://{{ rancher_hostname }}/v3/globalRoles/admin"
+        method: PUT
+        validate_certs: "{{ cm_validate_certs }}"
+        body_format: json
+        body:
+          newUserDefault: true
+        headers:
+          Authorization: Bearer {{ ra_token }}
+      retries: 5
+      delay: 10
+      tags: auth
 
 

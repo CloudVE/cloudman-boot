@@ -5,7 +5,7 @@ cm_initial_storage_size: "{{ lookup('env', 'CM_INITIAL_STORAGE_SIZE') }}"
 cm_helm_values: "{{ lookup('env', 'CM_HELM_VALUES') | b64decode | from_yaml }}"
 cm_skip_cloudman: "{{ lookup('env', 'CM_SKIP_CLOUDMAN') | default('false', true) }}"
 cm_cluster_name: local
-cm_namespace_name: cloudman
+cm_namespace_name: "{{ lookup('env', 'CM_NAMESPACE_NAME') | default('cloudman', true) }}"
 cm_chart_version: "{{ lookup('env', 'CM_CHART_VERSION') | default('', true) }}"
 cm_charts_repo: "{{ lookup('env', 'CM_CHARTS_REPO') | default('https://raw.githubusercontent.com/cloudve/helm-charts/master/', true) }}"
 cm_deployment_name: "{{ lookup('env', 'CM_DEPLOYMENT_NAME') }}"
