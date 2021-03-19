@@ -22,6 +22,7 @@ rancher_hostname: "rancher.{{ cluster_hostname }}{% if cluster_hostname | ipaddr
 
 # Keycloak operator
 cm_keycloak_operator_version: "{{ lookup('env', 'CM_KEYCLOAK_OPERATOR_VERSION') | default('latest', true) }}"
+cm_keycloak_operator_path: "/tmp/keycloak-operator-{{ cm_keycloak_operator_version }}"
 cm_keycloak_namespace: "{{ lookup('env', 'CM_KEYCLOAK_NAMESPACE') | default('keycloak', true) }}"
 cm_keycloak_operator_fork: "{{ lookup('env', 'CM_KEYCLOAK_OPERATOR_FORK') | default('keycloak/keycloak-operator', true) }}"
 cm_keycloak_realm_name: "{{ lookup('env', 'CM_KEYCLOAK_REALM_NAME') | default('gvl', true) }}"
