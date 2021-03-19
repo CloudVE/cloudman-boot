@@ -17,8 +17,7 @@ cloudlaunch:
     cloudlaunchserver:
       admin_password: "{{ cluster_password }}"
       postgresql:
-         postgresqlPassword: {{ random_alphanumeric(16) }}
-         postgresqlPostgresPassword: {{ random_alphanumeric(16) }}
+         postgresqlPassword: "{{ cluster_password }}"
 influxdb:
     setDefaultUser:
         user:

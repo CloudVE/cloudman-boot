@@ -9,7 +9,7 @@ spec:
     matchLabels:
       app: gvl-sso
   client:
-    clientId: https://{{ rancher_hostname }}/v1-saml/keycloak/saml/metadata
+    clientId: rancher-cloudman
     protocol: saml
     enabled: true
     name: rancher
@@ -30,9 +30,9 @@ spec:
       display.on.consent.screen: "false"
       saml_name_id_format: "username"
       saml.onetimeuse.condition: "false"
-      saml.signing.certificate: "{{ rancher_key['content'] | b64decode }}"
+      saml.signing.certificate: "{{ rancher_cert['content'] | b64decode | regex_replace('([-]+(END|BEGIN)[^-]+[-]+)|\s', '') }}"
       saml.signature.algorithm: "RSA_SHA256"
-      saml.signing.private.key: "{{ rancher_cert['content'] | b64decode }}"
+      saml.signing.private.key: "{{ rancher_key['content'] | b64decode | regex_replace('([-]+(END|BEGIN)[^-]+[-]+)|\s', '') }}"
 
     protocolMappers:
       - name: role list

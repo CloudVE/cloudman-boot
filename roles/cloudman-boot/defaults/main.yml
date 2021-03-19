@@ -22,14 +22,12 @@ rancher_hostname: "rancher.{{ cluster_hostname }}{% if cluster_hostname | ipaddr
 
 # Keycloak operator
 cm_keycloak_operator_version: "{{ lookup('env', 'CM_KEYCLOAK_OPERATOR_VERSION') | default('latest', true) }}"
+cm_keycloak_operator_path: "{{ lookup('env', 'CM_KEYCLOAK_OPERATOR_PATH') | default('/tmp/keycloak-operator-{{ cm_keycloak_operator_version }}', true) }}"
 cm_keycloak_namespace: "{{ lookup('env', 'CM_KEYCLOAK_NAMESPACE') | default('keycloak', true) }}"
 cm_keycloak_operator_fork: "{{ lookup('env', 'CM_KEYCLOAK_OPERATOR_FORK') | default('keycloak/keycloak-operator', true) }}"
 cm_keycloak_realm_name: "{{ lookup('env', 'CM_KEYCLOAK_REALM_NAME') | default('gvl', true) }}"
 cm_keycloak_realm_registration: "{{ lookup('env', 'CM_KEYCLOAK_REALM_REGISTRATION') | default('false', true) }}"
 keycloak_hostname: "auth.{{ cluster_hostname }}{% if cluster_hostname | ipaddr %}.xip.io{% endif %}"
-
-# Used for generating oidc client secret
-random_client_secret: "{{ lookup('password', '/dev/null length=8 chars=ascii_letters,digits') | lower }}-{{ lookup('password', '/dev/null length=4 chars=ascii_letters,digits') | lower }}-{{ lookup('password', '/dev/null length=4 chars=ascii_letters,digits') | lower }}-{{ lookup('password', '/dev/null length=4 chars=ascii_letters,digits') | lower }}-{{ lookup('password', '/dev/null length=12 chars=ascii_letters,digits') | lower }}"
 
 # cloud provider for this cluster:
 # ref: https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/
