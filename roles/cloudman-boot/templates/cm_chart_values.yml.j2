@@ -23,22 +23,23 @@ influxdb:
     setDefaultUser:
         user:
             password: {{ random_alphanumeric(16) }}
-prometheus:
-    alertmanager:
-        config:
-            global:
-                http_config:
-                    basic_auth:
-                        password: {{ random_alphanumeric(16) }}
-    grafana:
-        adminPassword: {{ random_alphanumeric(16) }}
-        grafana.ini:
-           server:
-              root_url: "https://{{ cluster_hostname }}/grafana"
-           auth.generic_oauth:
-              auth_url: "https://{{ cluster_hostname }}/auth/realms/master/protocol/openid-connect/auth"
-              token_url: "https://{{ cluster_hostname }}/auth/realms/master/protocol/openid-connect/token"
-              api_url: "https://{{ cluster_hostname }}/auth/realms/master/protocol/openid-connect/userinfo"
+kubeprometheus:
+  prometheus:
+      alertmanager:
+          config:
+              global:
+                  http_config:
+                      basic_auth:
+                          password: {{ random_alphanumeric(16) }}
+      grafana:
+          adminPassword: {{ random_alphanumeric(16) }}
+          grafana.ini:
+             server:
+                root_url: "https://{{ cluster_hostname }}/grafana"
+             auth.generic_oauth:
+                auth_url: "https://{{ cluster_hostname }}/auth/realms/master/protocol/openid-connect/auth"
+                token_url: "https://{{ cluster_hostname }}/auth/realms/master/protocol/openid-connect/token"
+                api_url: "https://{{ cluster_hostname }}/auth/realms/master/protocol/openid-connect/userinfo"
 keycloak:
     keycloak:
        password: "{{ cluster_password }}"
