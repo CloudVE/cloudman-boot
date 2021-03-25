@@ -12,7 +12,7 @@
 
 - name: Helm install rancher
   command: >
-    /usr/local/bin/helm upgrade --install rancher rancher/rancher
+    /usr/local/bin/helm upgrade --install cloudman-rancher rancher/rancher
     -n cattle-system
     --set hostname={{ rancher_hostname }}
     --set ingress.tls.source=letsEncrypt
