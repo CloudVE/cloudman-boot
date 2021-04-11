@@ -13,6 +13,9 @@ cm_skip_wait_till_ready: true
 cm_force_pull_images: false
 cm_validate_certs: "{{ lookup('env', 'CM_VALIDATE_CERTS') | default('no', true) }}"
 
+# CVMFS-CSI version
+cm_cvmfs_csi_version: "{{ lookup('env', 'CM_CVMFS_CSI_VERSION') | default('1.4.0', true) }}"
+
 # cluster settings
 cluster_hostname: "{{ lookup('env', 'CLUSTER_HOSTNAME') | default(inventory_hostname, true) }}"
 cluster_password: "{{ lookup('env', 'CLUSTER_PASSWORD') }}"

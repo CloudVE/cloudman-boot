@@ -47,6 +47,7 @@
 
 - name: Helm install galaxy-cvmfs-csi
   command: >
-    /usr/local/bin/helm upgrade --install gxy-cvmfs galaxyproject/galaxy-cvmfs-csi
+    /usr/local/bin/helm upgrade --install gxy-cvmfs galaxyproject/galaxy-cvmfs-csi`
+    --version {{ cm_cvmfs_csi_version }}
     --namespace csi-drivers
   ignore_errors: true
