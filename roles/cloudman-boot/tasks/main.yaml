@@ -8,6 +8,10 @@
 - name: Setup cert-manager
   include_tasks: certmanager.yaml
 
+- name: Setup postgresql operator
+  include_tasks: postgres.yaml
+  tags: postgres
+
 - name: Setup common storage providers
   include_tasks: storage.yaml
   when: rke_setup_storage_drivers
