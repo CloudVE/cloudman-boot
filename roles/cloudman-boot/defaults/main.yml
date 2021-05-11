@@ -16,7 +16,7 @@ cm_validate_certs: "{{ lookup('env', 'CM_VALIDATE_CERTS') | default('no', true) 
 # CVMFS-CSI version
 cm_cvmfs_csi_version: "{{ lookup('env', 'CM_CVMFS_CSI_VERSION') | default('1.4.0', true) }}"
 # Postgres operator
-cm_postgres_operator_version: "{{ lookup('env', 'CM_POSTGRES_OPERATOR_VERSION') | default('1.6.1', true) }}"
+cm_postgres_operator_version: "{{ lookup('env', 'CM_POSTGRES_OPERATOR_VERSION') | default('1.6.2', true) }}"
 
 # cluster settings
 cluster_hostname: "{{ lookup('env', 'CLUSTER_HOSTNAME') | default(inventory_hostname, true) }}"
