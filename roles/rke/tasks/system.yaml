@@ -10,7 +10,7 @@
   shell: while sudo fuser /var/lib/dpkg/{{ item }} >/dev/null 2>&1 ; do sleep 1 ; done
   loop:
     - lock
-    - lock.frontend
+    - lock-frontend
   when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
 - name: Update APT cache
