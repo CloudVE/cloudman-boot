@@ -8,7 +8,7 @@ spec:
   instances: 1
   extensions:
     - https://github.com/aerogear/keycloak-metrics-spi/releases/download/1.0.4/keycloak-metrics-spi-1.0.4.jar
-    - https://s3.us-east-1.amazonaws.com/cloudve.org/gvl/keycloak/gvltheme-keycloak-12.jar
+    - {{ cm_keycloak_theme_url }}
   externalAccess:
     enabled: True
     host: {{ keycloak_hostname }}

@@ -18,8 +18,8 @@ spec:
       realm:
         - name: superuser
     duplicateEmailsAllowed: false
-    loginTheme: gvltheme
-    accountTheme: gvltheme
+    loginTheme: "{{ cm_keycloak_theme_login }}"
+    accountTheme: "{{ cm_keycloak_theme_account }}"
     defaultRoles:
       - offline_access
       - uma_authorization

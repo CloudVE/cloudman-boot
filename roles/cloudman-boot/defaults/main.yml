@@ -32,6 +32,9 @@ cm_keycloak_namespace: "{{ lookup('env', 'CM_KEYCLOAK_NAMESPACE') | default('key
 cm_keycloak_operator_fork: "{{ lookup('env', 'CM_KEYCLOAK_OPERATOR_FORK') | default('keycloak/keycloak-operator', true) }}"
 cm_keycloak_realm_name: "{{ lookup('env', 'CM_KEYCLOAK_REALM_NAME') | default('gvl', true) }}"
 cm_keycloak_realm_registration: "{{ lookup('env', 'CM_KEYCLOAK_REALM_REGISTRATION') | default('false', true) }}"
+cm_keycloak_theme_url: "https://s3.us-east-1.amazonaws.com/cloudve.org/gvl/keycloak/gvltheme-keycloak-12.jar"
+cm_keycloak_theme_login: "gvltheme"
+cm_keycloak_theme_account: "{{ cm_keycloak_theme_login }}"
 keycloak_hostname: "auth.{{ cluster_hostname }}{% if cluster_hostname | ipaddr %}.xip.io{% endif %}"
 
 # Used for generating oidc client secret
