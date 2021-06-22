@@ -1,4 +1,6 @@
 - name: Wait for CloudMan login to become accessible
+  tags:
+    - cloudman_setup
   uri:
     url: "https://{{ cluster_hostname }}/cloudman/openid/openid/KeyCloak"
     method: GET
@@ -11,6 +13,7 @@
 
 - name: System help info
   debug:
+    - cloudman_setup
     msg: |
       "The system has now been setup. Access CloudMan at https://{{ cluster_hostname }}/"
       ""

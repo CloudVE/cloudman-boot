@@ -1,5 +1,7 @@
 - name: Add postgres operator Helm repo
-  tags: postgres
+  tags:
+    - postgres_operator_setup
+    - cloudman_setup
   block:
     - name: Add zalando repo
       shell: /usr/local/bin/helm repo add zalando https://raw.githubusercontent.com/zalando/postgres-operator/v{{ cm_postgres_operator_version }}/charts/postgres-operator/
@@ -9,7 +11,9 @@
       shell: /usr/local/bin/helm repo update
 
 - name: Helm install postgres-operator
-  tags: postgres
+  tags:
+    - postgres_operator_setup
+    - cloudman_setup
   command: >
     /usr/local/bin/helm upgrade --install psql-operator zalando/postgres-operator
     --create-namespace
