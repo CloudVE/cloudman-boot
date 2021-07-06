@@ -12,6 +12,7 @@ cm_deployment_name: "{{ lookup('env', 'CM_DEPLOYMENT_NAME') }}"
 cm_skip_wait_till_ready: true
 cm_force_pull_images: false
 cm_validate_certs: "{{ lookup('env', 'CM_VALIDATE_CERTS') | default('no', true) }}"
+cm_volume_reclaim_policy: "Retain"
 
 # CVMFS-CSI version
 cm_cvmfs_csi_version: "{{ lookup('env', 'CM_CVMFS_CSI_VERSION') | default('1.6.0', true) }}"

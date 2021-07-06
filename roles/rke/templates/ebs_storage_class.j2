@@ -43,6 +43,6 @@ parameters:
 {% else %}
 provisioner: rancher.io/local-path
 {% endif %}
-reclaimPolicy: Delete
+reclaimPolicy: "{{ cm_volume_reclaim_policy | default('Retain', true) }}"
 allowVolumeExpansion: true
 volumeBindingMode: WaitForFirstConsumer

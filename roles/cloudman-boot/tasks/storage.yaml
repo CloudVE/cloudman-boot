@@ -11,7 +11,7 @@
     --set persistence.storageClass="ebs"
     --set persistence.size="{{ cm_initial_storage_size | default('100Gi', true) }}"
     --set storageClass.create=true
-    --set storageClass.reclaimPolicy="Delete"
+    --set storageClass.reclaimPolicy="{{ cm_volume_reclaim_policy | default('Retain', true) }}"
     --set storageClass.allowVolumeExpansion=true
 
 - name: Helm install RClone for AWS S3
