@@ -19,7 +19,7 @@ cm_cvmfs_csi_version: "{{ lookup('env', 'CM_CVMFS_CSI_VERSION') | default('1.6.0
 # CVMFS-CSI extra params to helm install command
 cm_cvmfs_csi_extra_params: "{{ lookup('env', 'CM_CVMFS_CSI_EXTRA_PARAMS') | default('--set repositories.cvmfs-gxy-data=data.galaxyproject.org', true) }}"
 # Postgres operator
-cm_postgres_operator_version: "{{ lookup('env', 'CM_POSTGRES_OPERATOR_VERSION') | default('1.6.2', true) }}"
+cm_postgres_operator_version: "{{ lookup('env', 'CM_POSTGRES_OPERATOR_VERSION') | default('1.6.3', true) }}"
 
 # cluster settings
 cluster_hostname: "{{ lookup('env', 'CLUSTER_HOSTNAME') | default(inventory_hostname, true) }}"
