@@ -26,7 +26,7 @@ cluster_hostname: "{{ lookup('env', 'CLUSTER_HOSTNAME') | default(inventory_host
 cluster_password: "{{ lookup('env', 'CLUSTER_PASSWORD') }}"
 
 # rancher settings
-rancher_hostname: "rancher.{{ cluster_hostname }}{% if cluster_hostname | ipaddr %}.xip.io{% endif %}"
+rancher_hostname: "rancher.{{ cluster_hostname }}{% if cluster_hostname | ipaddr %}.nip.io{% endif %}"
 
 # Keycloak operator
 cm_keycloak_operator_version: "{{ lookup('env', 'CM_KEYCLOAK_OPERATOR_VERSION') | default('latest', true) }}"
@@ -38,7 +38,7 @@ cm_keycloak_realm_registration: "{{ lookup('env', 'CM_KEYCLOAK_REALM_REGISTRATIO
 cm_keycloak_theme_url: "https://s3.us-east-1.amazonaws.com/cloudve.org/gvl/keycloak/gvltheme-keycloak-12.jar"
 cm_keycloak_theme_login: "gvltheme"
 cm_keycloak_theme_account: "{{ cm_keycloak_theme_login }}"
-keycloak_hostname: "auth.{{ cluster_hostname }}{% if cluster_hostname | ipaddr %}.xip.io{% endif %}"
+keycloak_hostname: "auth.{{ cluster_hostname }}{% if cluster_hostname | ipaddr %}.nip.io{% endif %}"
 
 # Used for generating oidc client secret
 random_client_secret: "{{ lookup('password', '/dev/null length=8 chars=ascii_letters,digits') | lower }}-{{ lookup('password', '/dev/null length=4 chars=ascii_letters,digits') | lower }}-{{ lookup('password', '/dev/null length=4 chars=ascii_letters,digits') | lower }}-{{ lookup('password', '/dev/null length=4 chars=ascii_letters,digits') | lower }}-{{ lookup('password', '/dev/null length=12 chars=ascii_letters,digits') | lower }}"
