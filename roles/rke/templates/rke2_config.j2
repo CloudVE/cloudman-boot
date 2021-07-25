@@ -12,7 +12,7 @@ tls-san:
 server: https://{{ rke_registration_server }}:9345
 {% endif %}
 
-{% if is_rke_registration_server and kube_cloud_provider %}
+{% if 'controllers' in group_names and kube_cloud_provider %}
 cloud-provider-name: "{{ kube_cloud_provider if kube_in_tree_provider else 'external' }}"
 {% if kube_in_tree_provider %}
 cloud-provider-config: "/etc/kubernetes/cloud-config"
