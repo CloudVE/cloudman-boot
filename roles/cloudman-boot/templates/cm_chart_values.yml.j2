@@ -43,6 +43,8 @@ keycloak:
        password: "{{ cluster_password }}"
 global:
     domain: {{ cluster_hostname }}
+    keycloak_hostname: "{{ keycloak_hostname }}"
+    deployment_name: "{{ cm_deployment_name }}"
 
 {% if cm_helm_values %}
 {{ cm_helm_values }}

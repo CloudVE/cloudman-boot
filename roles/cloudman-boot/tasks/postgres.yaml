@@ -1,7 +1,11 @@
 - name: Add postgres operator Helm repo
   tags: postgres
   block:
-    - name: Add zalando repo
+    - name: "Remove existing zalando repository"
+      shell: /usr/local/bin/helm repo remove zalando
+      ignore_errors: True
+
+    - name: "Add zalando repo for operator version: {{ cm_postgres_operator_version }}"
       shell: /usr/local/bin/helm repo add zalando https://raw.githubusercontent.com/zalando/postgres-operator/v{{ cm_postgres_operator_version }}/charts/postgres-operator/
       ignore_errors: True
 

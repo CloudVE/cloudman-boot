@@ -2,7 +2,7 @@
   hosts: rke_cluster
   roles:
     - role: rke
-      tags: ["controller", "agent"]
+      tags: ["controller", "agent", "rke"]
 
 - name: Setup cloudman
   hosts: controllers[0]

@@ -8,7 +8,7 @@ cm_cluster_name: local
 cm_namespace_name: "{{ lookup('env', 'CM_NAMESPACE_NAME') | default('cloudman', true) }}"
 cm_chart_version: "{{ lookup('env', 'CM_CHART_VERSION') | default('', true) }}"
 cm_charts_repo: "{{ lookup('env', 'CM_CHARTS_REPO') | default('https://raw.githubusercontent.com/cloudve/helm-charts/master/', true) }}"
-cm_deployment_name: "{{ lookup('env', 'CM_DEPLOYMENT_NAME') }}"
+cm_deployment_name: "{{ lookup('env', 'CM_DEPLOYMENT_NAME') | default('gvl', true) }}"
 cm_skip_wait_till_ready: true
 cm_force_pull_images: false
 cm_validate_certs: "{{ lookup('env', 'CM_VALIDATE_CERTS') | default('no', true) }}"
