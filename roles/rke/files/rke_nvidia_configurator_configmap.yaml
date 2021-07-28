@@ -64,3 +64,21 @@ data:
     {{end}}
     {{end}}
     {{end}}
+  configurator.sh: |
+    echo Node name is $NODE_NAME
+    export TOOLKIT_POD=$(kubectl get -n gpu-operator-resources pods -l app=nvidia-container-toolkit-daemonset --field-selector=spec.nodeName=$NODE_NAME -o=name)
+    echo Toolkit pod is $TOOLKIT_POD
+    until kubectl logs --tail 10 -n gpu-operator-resources $TOOLKIT_POD | grep "Waiting for signal";
+    do echo Waiting for toolkit to be ready;
+    sleep 2;
+    done;
+    echo Restarting containerd with new rke2 nvidia config;
+    cp /src/config.toml.tmpl /dest/config.toml.tmpl
+    echo Restarting nvidia toolkit daemonset
+    kubectl rollout restart -n gpu-operator-resources daemonset/nvidia-container-toolkit-daemonset
+    echo Sleeping for 30 seconds
+    sleep 30
+    echo Restarting remaining nvidia daemonsets
+    kubectl rollout restart -n gpu-operator-resources daemonset/nvidia-dcgm-exporter
+    kubectl rollout restart -n gpu-operator-resources daemonset/gpu-feature-discovery
+    kubectl rollout restart -n gpu-operator-resources daemonset/nvidia-device-plugin-daemonset
