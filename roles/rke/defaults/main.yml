@@ -20,6 +20,8 @@ rke_container_image: "rancher/rke2-runtime:v1.19.9-rke2r1"
 rke_in_docker: "{{ lookup('env', 'RKE_IN_DOCKER') | default(false, true) }}"
 rke_registration_server: "{{ hostvars[groups['controllers'][0]]['ansible_fqdn'] | default(groups['controllers'][0]) }}"
 is_rke_registration_server: "{{ rke_registration_server == ansible_fqdn }}"
+# If running against multiple nodes, make sure this value is set, or random values
+# will be generated per instance. If this token mismatches, nodes won't join the cluster.
 rke_registration_token: "{{ random_client_secret }}"
 rke_setup_storage_drivers: true
 rke_setup_gpu_drivers: false
