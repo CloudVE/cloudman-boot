@@ -56,6 +56,25 @@
     state: link
     force: true
 
+- name: Copy kubeconfig file for patching and download
+  copy:
+    src: /etc/rancher/rke2/rke2.yaml
+    dest: /tmp/rke2.yaml
+    mode: 0600
+    remote_src: yes
+
+- name: Patch the server address in the original kubeconfig
+  lineinfile:
+    path: /tmp/rke2.yaml
+    regexp: 'server: https://127\.0\.0\.1:6443'
+    line: "    server: https://{{ ansible_ssh_host }}:6443"
+
+- name: Download the kubeconfig
+  fetch:
+    src: /tmp/rke2.yaml
+    dest: outputs/{{ ansible_hostname }}.kube.config
+    flat: yes
+
 - name: Check whether kubectl exists
   shell: "which kubectl"
   register: kubectl_result
