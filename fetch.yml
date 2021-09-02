@@ -7,7 +7,7 @@
   tasks:
     - name: Create outputs directory
       file:
-        path: "{{ outputs_directory }}"
+        path: "{{ output_directory }}"
         state: directory
 
 - name: Patch and download the kubeconfig
@@ -31,7 +31,7 @@
     - name: Download the kubeconfig
       fetch:
         src: "{{ temp_file }}"
-        dest: outputs/{{ ansible_hostname }}.kube.config
+        dest: "{{ hostvars['localhost']['output_directory']}}/{{ ansible_hostname }}.kube.config"
         flat: yes
 
     - name: Cleanup the temp file
