@@ -1,6 +1,6 @@
 - name: Setup local filesystem
   hosts: localhost
-  tags: ['kubeconfig']
+  tags: [never, kubeconfig]
   tasks:
     - name: Create outputs directory
       file:
