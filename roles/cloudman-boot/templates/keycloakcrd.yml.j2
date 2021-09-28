@@ -9,6 +9,8 @@ spec:
   extensions:
     - https://github.com/aerogear/keycloak-metrics-spi/releases/download/1.0.4/keycloak-metrics-spi-1.0.4.jar
     - {{ cm_keycloak_theme_url }}
+  external:
+    url: https://{{ keycloak_hostname }}
   externalAccess:
     enabled: True
     host: {{ keycloak_hostname }}
