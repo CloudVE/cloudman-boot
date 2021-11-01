@@ -73,7 +73,7 @@
   include_tasks: helm.yaml
 
 - name: Wait for kubernetes to be ready
-  shell: "kubectl get node | grep {{ ansible_fqdn }}"
+  shell: "kubectl get node | grep {{ ansible_hostname if 'jetstream' in kube_cloud_conf else ansible_fqdn }}"
   register: kubectl_node_ready
   until: "' Ready' in kubectl_node_ready.stdout"
   retries: 50

@@ -1,4 +1,4 @@
-node-name: "{{ ansible_fqdn }}"
+node-name: "{{ ansible_hostname if 'jetstream' in kube_cloud_conf else ansible_fqdn }}"
 token: {{ rke_registration_token }}
 
 {% if 'controllers' in group_names %}
