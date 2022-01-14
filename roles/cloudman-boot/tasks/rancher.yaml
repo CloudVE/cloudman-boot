@@ -19,4 +19,5 @@
     --set letsEncrypt.email="admin@cloudve.org"
     --set letsEncrypt.environment="production"
     --set letsEncrypt.ingress.class=nginx
+    --set bootstrapPassword="{{ cluster_password }}"
   ignore_errors: true

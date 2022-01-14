@@ -29,6 +29,10 @@
     - name: Deploy the operator
       command: "/usr/local/bin/kubectl apply -f {{ cm_keycloak_operator_path }}/deploy/operator.yaml -n {{ cm_keycloak_namespace }}"
 
+    - name: Pin keycloak version
+      command: /usr/local/bin/kubectl patch deployment keycloak-operator -n keycloak -p '{"spec":{"template":{"spec":{"containers":[{"env":[{"name":"RELATED_IMAGE_KEYCLOAK","value":"{{ cm_keycloak_image }}"}],"name":"keycloak-operator"}]}}}}'
+      ignore_errors: True
+
 - name: Render Keycloak instance CRD
   template:
     src: keycloakcrd.yml.j2
