@@ -3,9 +3,12 @@
     /usr/local/bin/kubectl create namespace csi-drivers
   ignore_errors: true
 
+- name: Helm add nfs-ganesha-provisioner
+  command: /usr/local/bin/helm repo add nfs-ganesha https://raw.githubusercontent.com/kubernetes-sigs/nfs-ganesha-server-and-external-provisioner/gh-pages
+
 - name: Helm install nfs-provisioner
   command: >
-    /usr/local/bin/helm upgrade --install nfs-provisioner stable/nfs-server-provisioner
+    /usr/local/bin/helm upgrade --install nfs-provisioner nfs-ganesha/nfs-server-provisioner
     --namespace csi-drivers
     --set persistence.enabled=true
     --set persistence.storageClass="ebs"
