@@ -31,19 +31,6 @@
     svc_access_line: "Login to any of these services as user 'admin', using the password you supplied."
   when: using_random_pwd is not defined
 
-- name: Make sure /etc/kubernetes dir exists
-  file:
-    path: /etc/kubernetes
-    state: directory
-  become: yes
-
-- name: Create cloud config in /etc/kubernetes
-  copy:
-    content: "{{ kube_cloud_conf }}"
-    dest: /etc/kubernetes/cloud-config
-  become: yes
-  when: kube_cloud_provider | default(false)
-
 - name: Make sure ~/.kube dir exists
   file:
     path: ~/.kube

@@ -88,3 +88,18 @@
     path: /etc/rancher/node/password
     state: present
     timeout: 180
+
+- name: Make sure /etc/kubernetes dir exists
+  file:
+    path: /etc/kubernetes
+    state: directory
+  become: yes
+  when: kube_cloud_provider | default(false)
+
+- name: Create cloud config in /etc/kubernetes
+  copy:
+    content: "{{ kube_cloud_conf }}"
+    dest: /etc/kubernetes/cloud-config
+  become: yes
+  when: kube_cloud_provider | default(false)
+
