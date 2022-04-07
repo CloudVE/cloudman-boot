@@ -16,6 +16,8 @@ server: https://{{ rke_registration_server }}:9345
 cloud-provider-name: "{{ kube_cloud_provider if kube_in_tree_provider else 'external' }}"
 {% if kube_in_tree_provider %}
 cloud-provider-config: "/etc/kubernetes/cloud-config"
+{% if 'controllers' in group_names %}
 kube-controller-manager-arg: "configure-cloud-routes={{ 'true' if kube_cloud_provider == 'gce' else 'false' }}"
+{% endif %}
 {% endif %}
 {% endif %}
