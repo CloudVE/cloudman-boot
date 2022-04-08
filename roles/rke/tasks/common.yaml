@@ -28,6 +28,20 @@
   script: "set_aws_instance_tag.py '{{ cluster_hostname }}'"
   when: kube_cloud_provider == "aws"
 
+- name: Make sure /etc/kubernetes dir exists
+  file:
+    path: /etc/kubernetes
+    state: directory
+  become: yes
+  when: kube_cloud_provider | default(false)
+
+- name: Create cloud config in /etc/kubernetes
+  copy:
+    content: "{{ kube_cloud_conf }}"
+    dest: /etc/kubernetes/cloud-config
+  become: yes
+  when: kube_cloud_provider | default(false)
+
 - name: "Install rke node of type: {{ rke_node_type }} with version: {{ rke_version }}"
   shell: >-
     curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION="{{ rke_version }}" INSTALL_RKE2_TYPE="{{ rke_node_type }}" sh -
@@ -88,3 +102,4 @@
     path: /etc/rancher/node/password
     state: present
     timeout: 180
+
