@@ -4,7 +4,7 @@
 kube_cloud_provider: "{{ lookup('env', 'KUBE_CLOUD_PROVIDER') }}"
 kube_cloud_conf: "{{ lookup('env', 'KUBE_CLOUD_CONF') | b64decode }}"
 # Whether to use the in-tree cloud provider or external cloud-provider
-kube_in_tree_provider: true
+kube_in_tree_provider: false
 
 # cluster settings
 cluster_hostname: "{{ lookup('env', 'CLUSTER_HOSTNAME') | default(inventory_hostname, true) }}"

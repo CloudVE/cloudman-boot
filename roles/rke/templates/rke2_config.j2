@@ -1,4 +1,4 @@
-node-name: "{{ ansible_hostname if 'jetstream' in ansible_fqdn else ansible_fqdn }}"
+node-name: "{{ ansible_hostname if 'jetstream' in ansible_fqdn or 'js2local' in ansible_fqdn else ansible_fqdn }}"
 token: {{ rke_registration_token }}
 
 {% if 'controllers' in group_names %}
@@ -6,6 +6,9 @@ write-kubeconfig-mode: "0600"
 disable: rke2-ingress-nginx
 tls-san:
   - {{ cluster_hostname }}
+{% if 'js2local' in ansible_fqdn %}
+  - {{ cluster_hostname }}.js2local
+{% endif %}
 {% endif %}
 
 {% if not is_rke_registration_server %}
