@@ -101,5 +101,5 @@
   wait_for:
     path: /etc/rancher/node/password
     state: present
-    timeout: 180
+    timeout: 1800
 
