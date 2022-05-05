@@ -1,0 +1,40 @@
+---
+# Playbook used to download a copy of the kubeconfig file from a RKE cluster.
+- name: Ensure outputs directory exists
+  hosts: localhost
+  vars:
+    output_directory: outputs
+  tasks:
+    - name: Create outputs directory
+      file:
+        path: "{{ output_directory }}"
+        state: directory
+
+- name: Patch and download the kubeconfig
+  hosts: controllers[0]
+  vars:
+    temp_file: /tmp/kubeconfig
+  tasks:
+    - name: Copy kubeconfig file for patching and download
+      copy:
+        src: /etc/rancher/rke2/rke2.yaml
+        dest: "{{ temp_file }}"
+        mode: 0600
+        remote_src: yes
+
+    - name: Patch the server address in the original kubeconfig
+      lineinfile:
+        path: "{{ temp_file }}"
+        regexp: 'server: https://127\.0\.0\.1:6443'
+        line: "    server: https://{{ ansible_ssh_host }}:6443"
+
+    - name: Download the kubeconfig
+      fetch:
+        src: "{{ temp_file }}"
+        dest: "{{ hostvars['localhost']['output_directory']}}/{{ ansible_hostname }}.kube.config"
+        flat: yes
+
+    - name: Cleanup the temp file
+      file:
+        path: "{{ temp_file }}"
+        state: absent
