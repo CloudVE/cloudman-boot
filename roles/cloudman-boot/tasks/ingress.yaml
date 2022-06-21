@@ -13,7 +13,7 @@
 - name: Helm install nginx ingress controller
   command: >
     /usr/local/bin/helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx
-    --version 3.34.0
+    --version 4.1.4
     --namespace ingress-nginx
     --set controller.kind="DaemonSet"
     --set controller.hostNetwork=true
