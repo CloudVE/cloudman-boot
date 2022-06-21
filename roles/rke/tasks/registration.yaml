@@ -33,7 +33,7 @@
 
 - name: Patch node-selector on OpenStack because of https://github.com/rancher/k3s/issues/1869
   shell: |
-    kubectl patch daemonset -n kube-system openstack-cloud-controller-manager -p '{"spec": {"template": {"spec": {"nodeSelector": {"node-role.kubernetes.io/control-plane": "true"}}}}}'
+    kubectl patch daemonset -n kube-system openstack-cloud-controller-manager -p '{"spec": {"template": {"spec": {"nodeSelector": {"node-role.kubernetes.io/master": "true"}}}}}'
   ignore_errors: true
   when: not kube_in_tree_provider and kube_cloud_provider == "openstack"
 
