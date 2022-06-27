@@ -26,9 +26,9 @@
 - name: Install OpenStack Cloud Controller Manager
   shell: kubectl apply -f {{ item }}
   with_items:
-    - https://raw.githubusercontent.com/kubernetes/cloud-provider-openstack/master/cluster/addons/rbac/cloud-controller-manager-roles.yaml
-    - https://raw.githubusercontent.com/kubernetes/cloud-provider-openstack/master/cluster/addons/rbac/cloud-controller-manager-role-bindings.yaml
-    - https://raw.githubusercontent.com/kubernetes/cloud-provider-openstack/master/manifests/controller-manager/openstack-cloud-controller-manager-ds.yaml
+    - https://raw.githubusercontent.com/kubernetes/cloud-provider-openstack/master/manifests/controller-manager/cloud-controller-manager-roles.yaml
+    - https://raw.githubusercontent.com/kubernetes/cloud-provider-openstack/master/manifests/controller-manager/cloud-controller-manager-role-bindings.yaml
+    - https://gist.githubusercontent.com/almahmoud/b02942eb2b18ea14123e163e069a79e2/raw/b59139b17d697c9075ce3870ad7e88c567851d8a/openstack-ds.yaml
   when: not kube_in_tree_provider and kube_cloud_provider == "openstack"
 
 - name: Patch node-selector on OpenStack because of https://github.com/rancher/k3s/issues/1869

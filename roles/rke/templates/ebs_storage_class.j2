@@ -39,7 +39,7 @@ provisioner: kubernetes.io/cinder
 provisioner: cinder.csi.openstack.org
 {% endif %}
 parameters:
-  availability: melbourne-qh2
+  availability: nova
 {% else %}
 provisioner: rancher.io/local-path
 {% endif %}
