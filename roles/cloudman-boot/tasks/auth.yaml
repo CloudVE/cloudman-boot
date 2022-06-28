@@ -205,3 +205,26 @@
       retries: 5
       delay: 10
       tags: auth
+
+    - name: Get external cluster kubeconfig
+      uri:
+        url: https://{{ rancher_hostname }}/v3/clusters/local?action=generateKubeconfig
+        method: POST
+        validate_certs: "{{ cm_validate_certs }}"
+        headers:
+          Authorization: Bearer {{ ra_token }}
+      register: kubeconfig_response
+      retries: 10
+      delay: 2
+      until: kubeconfig_response['status']|default(0) == 200
+      tags: auth
+
+    - name: Set external Kubeconfig
+      set_fact:
+        ex_kubeconfig: "{{ kubeconfig_response.json.config }}"
+
+    - name: Save external kubeconfig to file
+      copy:
+        content: "{{ ex_kubeconfig }}"
+        dest: "/etc/rancher/rke2/external.yaml"
+      delegate_to: localhost
