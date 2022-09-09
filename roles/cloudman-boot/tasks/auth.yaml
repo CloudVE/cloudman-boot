@@ -23,6 +23,14 @@
         dest: "{{ cm_keycloak_operator_path }}"
       when: cm_keycloak_operator_version in ["latest", "master"]
 
+    - name: make sure make command is available
+      apt: pkg=build-essential
+      register: apt_status
+      until: apt_status is success
+      delay: 6
+      retries: 20
+      become: yes
+
     - name: Go to keycloak operator and prepare the cluster resources
       command: chdir={{ cm_keycloak_operator_path }} make cluster/prepare
 
