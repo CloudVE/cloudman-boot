@@ -30,7 +30,7 @@
   when: not kube_in_tree_provider and kube_cloud_provider == "gce"
 
 - name: Install GCP CSI Driver
-  shell: cd $HOME/go/src/sigs.k8s.io/gcp-compute-persistent-disk-csi-driver && GOPATH=$HOME/go GCE_PD_DRIVER_VERSION=stable ./deploy/kubernetes/deploy-driver.sh
+  shell: cd $HOME/go/src/sigs.k8s.io/gcp-compute-persistent-disk-csi-driver && GOPATH=$HOME/go GCE_PD_DRIVER_NAMESPACE=csi-drivers GCE_PD_DRIVER_VERSION=noauth ./deploy/kubernetes/deploy-driver.sh --skip-sa-check
   when: not kube_in_tree_provider and kube_cloud_provider == "gce"
 
 - name: Install OpenStack CSI Driver
