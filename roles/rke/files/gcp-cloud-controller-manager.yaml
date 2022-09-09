@@ -237,7 +237,7 @@ spec:
         k8s-app: cloud-controller-manager
     spec:
       nodeSelector:
-        node-role.kubernetes.io/master: ""
+        node-role.kubernetes.io/master: "true"
       tolerations:
       - key: node.cloudprovider.kubernetes.io/uninitialized
         value: "true"
