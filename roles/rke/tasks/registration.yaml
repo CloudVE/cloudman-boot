@@ -16,11 +16,16 @@
   ignore_errors: true
   when: not kube_in_tree_provider and kube_cloud_provider == "aws"
 
+- name: Copy GCP cloud-controller-manager manifests
+  copy:
+    src: gcp-cloud-controller-manager.yaml
+    dest: /tmp/gcp-cloud-controller-manager.yaml
+  when: not kube_in_tree_provider and kube_cloud_provider == "gce"
+
 - name: Install GCP Cloud Controller Manager
   shell: kubectl apply -f {{ item }}
   with_items:
-    - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/release-1.19/manifests/rbac.yaml
-    - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/release-1.19/manifests/aws-cloud-controller-manager-daemonset.yaml
+    - /tmp/gcp-cloud-controller-manager.yaml
   when: not kube_in_tree_provider and kube_cloud_provider == "gce"
 
 - name: Install OpenStack Cloud Controller Manager
