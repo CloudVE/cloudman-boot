@@ -15,10 +15,18 @@
         --namespace csi-drivers
   when: not kube_in_tree_provider and kube_cloud_provider == "azure"
 
+- name: Uninstall google-cloud-sdk (https://cloud.google.com/sdk/docs/downloads-snap)
+  snap:
+    name: "google-cloud-sdk"
+    classic: yes
+    state: absent
+  become: yes
+
 - name: Install golang and gcloud cli (needed for gcp csi driver)
   snap:
-    name: {{  item }}
+    name: "{{ item }}"
     classic: yes
+  become: yes
   with_items:
     - go
     - google-cloud-cli
