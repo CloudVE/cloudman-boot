@@ -15,14 +15,13 @@
         --namespace csi-drivers
   when: not kube_in_tree_provider and kube_cloud_provider == "azure"
 
-- name: install golang (needed for gcp csi driver)
-  apt: pkg=golang-go state=latest
-  register: apt_status
-  until: apt_status is success
-  delay: 6
-  retries: 20
-  become: yes
-  when: not kube_in_tree_provider and kube_cloud_provider == "gce"
+- name: Install golang and gcloud cli (needed for gcp csi driver)
+  snap:
+    name: {{  item }}
+    classic: yes
+  with_items:
+    - go
+    - google-cloud-cli
 
 - name: Clone GCP CSI Driver
   shell: git clone https://github.com/kubernetes-sigs/gcp-compute-persistent-disk-csi-driver $HOME/go/src/sigs.k8s.io/gcp-compute-persistent-disk-csi-driver
