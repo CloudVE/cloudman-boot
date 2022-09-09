@@ -2,6 +2,13 @@
   command: >
     /usr/local/bin/kubectl create namespace csi-drivers
   ignore_errors: true
+  when: kube_cloud_provider != "gce"
+
+- name: Create GCP CSI driver namespace
+  command: >
+    /usr/local/bin/kubectl create namespace gce-pd-csi-driver
+  ignore_errors: true
+  when: kube_cloud_provider == "gce"
 
 - name: Install AWS Disk CSI Driver
   command: >
@@ -15,19 +22,14 @@
         --namespace csi-drivers
   when: not kube_in_tree_provider and kube_cloud_provider == "azure"
 
-- name: Install golang (needed for gcp csi driver)
-  snap:
-    name: go
-    classic: yes
-  become: yes
-
-- name: Clone GCP CSI Driver
-  shell: git clone https://github.com/kubernetes-sigs/gcp-compute-persistent-disk-csi-driver $HOME/go/src/sigs.k8s.io/gcp-compute-persistent-disk-csi-driver
-  ignore_errors: true
+- name: Render hostpath storage class template
+  copy:
+    src: gcp-compute-persistent-disk-csi-driver-specs-generated.yaml
+    dest: /tmp/gcp-compute-persistent-disk-csi-driver-specs-generated.yaml
   when: not kube_in_tree_provider and kube_cloud_provider == "gce"
 
 - name: Install GCP CSI Driver
-  shell: cd $HOME/go/src/sigs.k8s.io/gcp-compute-persistent-disk-csi-driver && GOPATH=$HOME/go GCE_PD_DRIVER_VERSION=noauth ./deploy/kubernetes/deploy-driver.sh
+  shell: /usr/local/bin/kubectl apply -f /tmp/gcp-compute-persistent-disk-csi-driver-specs-generated.yaml
   when: not kube_in_tree_provider and kube_cloud_provider == "gce"
 
 - name: Install OpenStack CSI Driver
