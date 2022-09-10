@@ -20,6 +20,7 @@
     --set controller.hostPort.enabled=true
     --set controller.service.type="ClusterIP"
     --set controller.ingressClassResource.default=true
+    --set controller.watchIngressWithoutClass=true
   ignore_errors: true
 
 - name: Fix for issue https://github.com/kubernetes/ingress-nginx/issues/5401
