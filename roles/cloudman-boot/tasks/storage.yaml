@@ -3,8 +3,9 @@
     /usr/local/bin/kubectl create namespace csi-drivers
   ignore_errors: true
 
-- name: Helm add nfs-ganesha-provisioner
+- name: Helm repo add nfs-ganesha-provisioner
   command: /usr/local/bin/helm repo add nfs-ganesha https://raw.githubusercontent.com/kubernetes-sigs/nfs-ganesha-server-and-external-provisioner/gh-pages
+  ignore_errors: true
 
 - name: Helm install nfs-provisioner
   command: >
@@ -19,7 +20,7 @@
 
 - name: Helm install RClone for AWS S3
   command: >
-    /usr/local/bin/helm upgrade --install rclone-csi galaxyproject/csi-rclone
+    /usr/local/bin/helm upgrade --install rclone-csi wunderio/csi-rclone
     --namespace csi-drivers
     --set storageClass.name="rclone"
     --set params.remote="s3"
