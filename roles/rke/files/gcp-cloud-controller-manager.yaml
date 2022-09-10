@@ -1,4 +1,4 @@
-# https://github.com/siderolabs/talos/pull/4513
+# https://github.com/kubernetes/kops/commit/733f4d524f1930280c43e1b80fc525674e683a4f
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -7,42 +7,27 @@ metadata:
   namespace: kube-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
+kind: RoleBinding
 metadata:
-  name: system:cloud-provider
-rules:
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - create
-  - patch
-  - update
-- apiGroups:
-  - ""
-  resources:
-  - services/status
-  verbs:
-  - patch
-  - update
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: system:cloud-provider
+  name: cloud-controller-manager:apiserver-authentication-reader
+  namespace: kube-system
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: system:cloud-provider
+  kind: Role
+  name: extension-apiserver-authentication-reader
 subjects:
-- kind: ServiceAccount
-  name: cloud-provider
+- apiGroup: ""
+  kind: ServiceAccount
+  name: cloud-controller-manager
   namespace: kube-system
 ---
+
+# https://github.com/kubernetes/cloud-provider-gcp/blob/master/deploy/cloud-node-controller-role.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
   name: system:cloud-controller-manager
 rules:
 - apiGroups:
@@ -60,10 +45,14 @@ rules:
   - leases
   verbs:
   - create
+  - get
+  - list
+  - watch
+  - update
 - apiGroups:
   - coordination.k8s.io
   resourceNames:
-    - cloud-controller-manager
+  - cloud-controller-manager
   resources:
   - leases
   verbs:
@@ -128,8 +117,34 @@ rules:
   - create
 ---
 apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
+  name: system::leader-locking-cloud-controller-manager
+  namespace: kube-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  resourceNames:
+  - cloud-controller-manager
+  verbs:
+  - get
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
   name: system:controller:cloud-node-controller
 rules:
 - apiGroups:
@@ -160,6 +175,7 @@ rules:
   - update
   - delete
   - patch
+
 - apiGroups:
   - ""
   resources:
@@ -175,29 +191,19 @@ rules:
   - list
   - delete
 ---
+
+# https://github.com/kubernetes/cloud-provider-gcp/blob/master/deploy/cloud-node-controller-binding.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: cloud-controller-manager:apiserver-authentication-reader
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
+  name: system::leader-locking-cloud-controller-manager
   namespace: kube-system
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: extension-apiserver-authentication-reader
-subjects:
-- apiGroup: ""
-  kind: ServiceAccount
-  name: cloud-controller-manager
-  namespace: kube-system
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: system:cloud-controller-manager
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: system:cloud-controller-manager
+  name: system::leader-locking-cloud-controller-manager
 subjects:
 - kind: ServiceAccount
   name: cloud-controller-manager
@@ -206,6 +212,24 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
+  name: system:cloud-controller-manager
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:cloud-controller-manager
+subjects:
+- kind: ServiceAccount
+  apiGroup: ""
+  name: cloud-controller-manager
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
   name: system:controller:cloud-node-controller
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -216,77 +240,108 @@ subjects:
   name: cloud-node-controller
   namespace: kube-system
 ---
+
+# https://github.com/kubernetes/cloud-provider-gcp/blob/master/deploy/pvl-controller-role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
+  name: system:controller:pvl-controller
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumeclaims
+  - persistentvolumes
+  verbs:
+  - list
+  - watch
+---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: cloud-controller-manager
   namespace: kube-system
   labels:
-    tier: control-plane
-    k8s-app: cloud-controller-manager
+    component: cloud-controller-manager
 spec:
   selector:
     matchLabels:
-     k8s-app: cloud-controller-manager
+      component: cloud-controller-manager
   updateStrategy:
     type: RollingUpdate
   template:
     metadata:
       labels:
         tier: control-plane
-        k8s-app: cloud-controller-manager
+        component: cloud-controller-manager
     spec:
-      nodeSelector:
-        node-role.kubernetes.io/master: "true"
+      nodeSelector: null
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: Exists
+            - matchExpressions:
+              - key: node-role.kubernetes.io/master
+                operator: Exists
       tolerations:
-        - effect: NoSchedule
-          key: node-role.kubernetes.io/master
-          operator: Exists
-        - effect: NoExecute
-          key: node.kubernetes.io/unreachable
-          operator: Exists
-          tolerationSeconds: 120
-        - effect: NoExecute
-          key: node.kubernetes.io/not-ready
-          operator: Exists
-          tolerationSeconds: 120
-        - effect: NoSchedule
-          key: node.cloudprovider.kubernetes.io/uninitialized
-          operator: Exists
-        - effect: NoSchedule
-          key: node.kubernetes.io/not-ready
-          operator: Exists
-      securityContext:
-        seccompProfile:
-          type: RuntimeDefault
-        runAsUser: 65521
-        runAsNonRoot: true
-      priorityClassName: system-node-critical
-      hostNetwork: true
+      - key: node.cloudprovider.kubernetes.io/uninitialized
+        value: "true"
+        effect: NoSchedule
+      - key: node.kubernetes.io/not-ready
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/master
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/control-plane
+        effect: NoSchedule
       serviceAccountName: cloud-controller-manager
       containers:
         - name: cloud-controller-manager
-          image: quay.io/openshift/origin-gcp-cloud-controller-manager:latest
-          resources:
-            requests:
-              cpu: 200m
-              memory: 128Mi
-          command:
-            - /bin/gcp-cloud-controller-manager
+          # alternative image: quay.io/openshift/origin-gcp-cloud-controller-manager:4.10.0
+          image: k8scloudprovidergcp/cloud-controller-manager:v1.23.3
+          imagePullPolicy: IfNotPresent
+          command: [ '/usr/local/bin/cloud-controller-manager' ]
           args:
-            - --v=3
-            - --bind-address=127.0.0.1
             - --cloud-provider=gce
+            - --cloud-config=/etc/kubernetes/cloud-config
             - --use-service-account-credentials
-            - --leader-elect=true
-            - --configure-cloud-routes=true
+            - --configure-cloud-routes=false
             - --allocate-node-cidrs=false
             - --controllers=*,-nodeipam
           livenessProbe:
+            failureThreshold: 3
             httpGet:
               host: 127.0.0.1
-              port: 10258
               path: /healthz
+              port: 10258
               scheme: HTTPS
             initialDelaySeconds: 15
+            periodSeconds: 10
+            successThreshold: 1
             timeoutSeconds: 15
+          resources:
+            requests:
+              cpu: 200m
+          volumeMounts:
+          - mountPath: /etc/kubernetes/cloud-config
+            name: cloudconfig
+            readOnly: true
+      hostNetwork: true
+      priorityClassName: system-cluster-critical
+      volumes:
+        - hostPath:
+            path: /etc/kubernetes/cloud-config
+            type: ""
+          name: cloudconfig
