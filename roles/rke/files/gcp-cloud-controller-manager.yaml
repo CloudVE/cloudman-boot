@@ -317,9 +317,10 @@ spec:
             - --cloud-provider=gce
             - --cloud-config=/etc/kubernetes/cloud-config
             - --use-service-account-credentials
-            - --configure-cloud-routes=false
-            - --allocate-node-cidrs=false
-            - --controllers=*,-nodeipam
+            - --configure-cloud-routes=true
+            - --allocate-node-cidrs=true
+            # https://www.suse.com/support/kb/doc/?id=000020167
+            - --cluster-cidr=10.42.0.0/16
           livenessProbe:
             failureThreshold: 3
             httpGet:
