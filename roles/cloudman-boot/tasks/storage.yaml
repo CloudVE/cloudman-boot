@@ -32,9 +32,21 @@
   when: kube_cloud_provider == "aws"
   ignore_errors: true
 
+- name: Helm install RClone for GCP
+  command: >
+    /usr/local/bin/helm upgrade --install rclone-csi wunderio/csi-rclone
+    --namespace csi-drivers
+    --set storageClass.name="rclone"
+    --set params.remote="google cloud storage"
+    --set params.remotePath="{{ cluster_hostname | replace('.', '-') }}-gvl-data"
+  when: kube_cloud_provider == "gce"
+  ignore_errors: true
+
+#    --set params.swift-application-credential-id="{{ cm_initial_cluster_data.cloud_config.credentials.os_application_credential_id }}"
+#    --set params.swift-application-credential-secret="{{ cm_initial_cluster_data.cloud_config.credentials.os_application_credential_secret }}"
 - name: Helm install RClone for OpenStack Swift
   command: >
-    /usr/local/bin/helm upgrade --install rclone-csi galaxyproject/csi-rclone
+    /usr/local/bin/helm upgrade --install rclone-csi wunderio/csi-rclone
     --namespace csi-drivers
     --set storageClass.name="rclone"
     --set params.remote="swift"
