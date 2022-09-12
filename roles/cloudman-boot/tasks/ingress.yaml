@@ -13,11 +13,14 @@
 - name: Helm install nginx ingress controller
   command: >
     /usr/local/bin/helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx
-    --version 3.34.0
+    --version 4.2.5
     --namespace ingress-nginx
     --set controller.kind="DaemonSet"
     --set controller.hostNetwork=true
-    --set controller.daemonset.useHostPort=true
+    --set controller.hostPort.enabled=true
+    --set controller.service.type="ClusterIP"
+    --set controller.ingressClassResource.default=true
+    --set controller.watchIngressWithoutClass=true
   ignore_errors: true
 
 - name: Fix for issue https://github.com/kubernetes/ingress-nginx/issues/5401

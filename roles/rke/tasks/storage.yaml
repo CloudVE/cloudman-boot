@@ -2,47 +2,46 @@
   command: >
     /usr/local/bin/kubectl create namespace csi-drivers
   ignore_errors: true
+  when: kube_cloud_provider != "gce"
+
+- name: Create GCP CSI driver namespace
+  command: >
+    /usr/local/bin/kubectl create namespace gce-pd-csi-driver
+  ignore_errors: true
+  when: kube_cloud_provider == "gce"
 
 - name: Install AWS Disk CSI Driver
   command: >
-    /usr/local/bin/helm upgrade --install aws-ebs-csi-driver https://github.com/kubernetes-sigs/aws-ebs-csi-driver/releases/download/v0.6.0/helm-chart.tgz
+    /usr/local/bin/helm upgrade --install aws-ebs-csi-driver https://github.com/kubernetes-sigs/aws-ebs-csi-driver/releases/download/helm-chart-aws-ebs-csi-driver-2.10.1/aws-ebs-csi-driver-2.10.1.tgz
         --namespace csi-drivers
-        --set enableVolumeScheduling=true
-        --set enableVolumeResizing=true
-        --set enableVolumeSnapshot=true
   when: not kube_in_tree_provider and kube_cloud_provider == "aws"
 
 - name: Install Azure Disk CSI Driver
   command: >
-    /usr/local/bin/helm upgrade --install azuredisk-csi-driver https://github.com/kubernetes-sigs/azuredisk-csi-driver/raw/master/charts/v0.9.0/azuredisk-csi-driver-v0.9.0.tgz
+    /usr/local/bin/helm upgrade --install azuredisk-csi-driver https://github.com/kubernetes-sigs/azuredisk-csi-driver/raw/master/charts/v1.22.0/azuredisk-csi-driver-v1.22.0.tgz
         --namespace csi-drivers
   when: not kube_in_tree_provider and kube_cloud_provider == "azure"
 
-- name: Install GCP CSI Driver
-  shell: curl -skSL https://raw.githubusercontent.com/kubernetes-sigs/gcp-compute-persistent-disk-csi-driver/master/deploy/kubernetes/deploy-driver.sh | bash --
+- name: Render hostpath storage class template
+  copy:
+    src: gcp-compute-persistent-disk-csi-driver-specs-generated.yaml
+    dest: /tmp/gcp-compute-persistent-disk-csi-driver-specs-generated.yaml
   when: not kube_in_tree_provider and kube_cloud_provider == "gce"
 
-# https://github.com/kubernetes/cloud-provider-openstack/issues/1202
-#- name: Install OpenStack CSI Driver
-#  command: >
-#    /usr/local/bin/helm repo add openstackcsi https://kubernetes.github.io/cloud-provider-openstack
-#  when: kube_in_tree_provider and kube_cloud_provider == "openstack"
-
-#- name: Install OpenStack CSI Driver
-#  command: >
-#    /usr/local/bin/helm upgrade --install cinder-csi galaxyproject/openstack-cinder-csi
-#    --namespace kube-system
-#  when: kube_in_tree_provider and kube_cloud_provider == "openstack"
+- name: Install GCP CSI Driver
+  shell: /usr/local/bin/kubectl apply -f /tmp/gcp-compute-persistent-disk-csi-driver-specs-generated.yaml
+  when: not kube_in_tree_provider and kube_cloud_provider == "gce"
 
 - name: Install OpenStack CSI Driver
-  shell: kubectl apply -f {{ item }}
-  with_items:
-    - https://raw.githubusercontent.com/kubernetes/cloud-provider-openstack/master/manifests/cinder-csi-plugin/cinder-csi-controllerplugin-rbac.yaml
-    - https://raw.githubusercontent.com/kubernetes/cloud-provider-openstack/master/manifests/cinder-csi-plugin/cinder-csi-nodeplugin-rbac.yaml
-    - https://raw.githubusercontent.com/kubernetes/cloud-provider-openstack/master/manifests/cinder-csi-plugin/cinder-csi-controllerplugin.yaml
-    - https://raw.githubusercontent.com/kubernetes/cloud-provider-openstack/master/manifests/cinder-csi-plugin/cinder-csi-nodeplugin.yaml
-    - https://raw.githubusercontent.com/kubernetes/cloud-provider-openstack/master/manifests/cinder-csi-plugin/csi-cinder-driver.yaml
-  when: not kube_in_tree_provider and kube_cloud_provider == "openstack"
+  command: >
+    /usr/local/bin/helm repo add cpo https://kubernetes.github.io/cloud-provider-openstack
+  when: kube_in_tree_provider and kube_cloud_provider == "openstack"
+
+- name: Install OpenStack CSI Driver
+  command: >
+    /usr/local/bin/helm upgrade --install cinder-csi cpo/openstack-cinder-csi
+        --namespace csi-drivers
+  when: kube_in_tree_provider and kube_cloud_provider == "openstack"
 
 - name: Render hostpath storage class template
   template:
