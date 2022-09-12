@@ -1,4 +1,4 @@
-node-name: "{{ ansible_hostname if 'jetstream' in ansible_fqdn or 'js2local' in ansible_fqdn else ansible_fqdn }}"
+node-name: "{{ ansible_hostname if 'jetstream' in ansible_fqdn or 'js2local' in ansible_fqdn or kube_cloud_provider == 'gce' else ansible_fqdn }}"
 token: {{ rke_registration_token }}
 
 {% if 'controllers' in group_names %}
