@@ -30,3 +30,5 @@
     --set ingressShim.defaultIssuerKind="ClusterIssuer"
     --set webhook.enabled=false
   ignore_errors: true
+  async: 30
+  poll: 0

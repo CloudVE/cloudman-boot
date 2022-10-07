@@ -26,6 +26,8 @@
     --set devicePlugin.args[2]='--fail-on-init-error=false'
     --set devicePlugin.args[3]='--device-list-strategy=envvar'
     --set devicePlugin.args[4]='--nvidia-driver-root=/run/nvidia/driver'
+  async: 30
+  poll: 0
 
 - name: Copy rke nvidia configurator manifests
   copy:
@@ -42,3 +44,5 @@
     - rke_nvidia_configurator_configmap.yaml
     - rke_nvidia_configurator_rbac.yaml
     - rke_nvidia_configurator_daemonset.yaml
+  async: 30
+  poll: 0

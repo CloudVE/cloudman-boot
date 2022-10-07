@@ -20,3 +20,5 @@
     --namespace "{{ cm_namespace_name }}"
     --set persistence.enabled=true
   ignore_errors: true
+  async: 30
+  poll: 0

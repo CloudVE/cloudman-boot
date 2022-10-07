@@ -15,12 +15,16 @@
     /usr/local/bin/helm upgrade --install aws-ebs-csi-driver https://github.com/kubernetes-sigs/aws-ebs-csi-driver/releases/download/helm-chart-aws-ebs-csi-driver-2.10.1/aws-ebs-csi-driver-2.10.1.tgz
         --namespace csi-drivers
   when: not kube_in_tree_provider and kube_cloud_provider == "aws"
+  async: 30
+  poll: 0
 
 - name: Install Azure Disk CSI Driver
   command: >
     /usr/local/bin/helm upgrade --install azuredisk-csi-driver https://github.com/kubernetes-sigs/azuredisk-csi-driver/raw/master/charts/v1.22.0/azuredisk-csi-driver-v1.22.0.tgz
         --namespace csi-drivers
   when: not kube_in_tree_provider and kube_cloud_provider == "azure"
+  async: 30
+  poll: 0
 
 - name: Render hostpath storage class template
   copy:
@@ -31,8 +35,10 @@
 - name: Install GCP CSI Driver
   shell: /usr/local/bin/kubectl apply -f /tmp/gcp-compute-persistent-disk-csi-driver-specs-generated.yaml
   when: not kube_in_tree_provider and kube_cloud_provider == "gce"
+  async: 30
+  poll: 0
 
-- name: Install OpenStack CSI Driver
+- name: Add OpenStack CSI Driver repo
   command: >
     /usr/local/bin/helm repo add cpo https://kubernetes.github.io/cloud-provider-openstack
   when: kube_in_tree_provider and kube_cloud_provider == "openstack"
@@ -42,6 +48,8 @@
     /usr/local/bin/helm upgrade --install cinder-csi cpo/openstack-cinder-csi
         --namespace csi-drivers
   when: kube_in_tree_provider and kube_cloud_provider == "openstack"
+  async: 30
+  poll: 0
 
 - name: Render hostpath storage class template
   template:
@@ -51,6 +59,8 @@
 - name: Fallback to hostpath provisioner when no cloud provider is set
   shell: /usr/local/bin/kubectl apply -f /tmp/hostpath_storage_class.yaml
   when: not kube_cloud_provider
+  async: 30
+  poll: 0
 
 - name: Render ebs storage class template
   template:
@@ -59,3 +69,5 @@
 
 - name: Deploy ebs storage class
   shell: /usr/local/bin/kubectl apply -f /tmp/ebs_storage_class.yml
+  async: 30
+  poll: 0

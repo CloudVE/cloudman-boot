@@ -22,6 +22,8 @@
     --set controller.ingressClassResource.default=true
     --set controller.watchIngressWithoutClass=true
   ignore_errors: true
+  async: 30
+  poll: 0
 
 - name: Fix for issue https://github.com/kubernetes/ingress-nginx/issues/5401
   command: >
