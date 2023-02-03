@@ -15,9 +15,9 @@ cm_validate_certs: "{{ lookup('env', 'CM_VALIDATE_CERTS') | default('no', true) 
 cm_volume_reclaim_policy: "Retain"
 
 # CVMFS-CSI version
-cm_cvmfs_csi_version: "{{ lookup('env', 'CM_CVMFS_CSI_VERSION') | default('1.6.0', true) }}"
+cm_cvmfs_csi_version: "{{ lookup('env', 'CM_CVMFS_CSI_VERSION') | default('2.0.0', true) }}"
 # CVMFS-CSI extra params to helm install command
-cm_cvmfs_csi_extra_params: "{{ lookup('env', 'CM_CVMFS_CSI_EXTRA_PARAMS') | default('--set repositories.cvmfs-gxy-data=data.galaxyproject.org', true) }}"
+cm_cvmfs_csi_extra_params: "{{ lookup('env', 'CM_CVMFS_CSI_EXTRA_PARAMS') | default('', true) }}"
 # Postgres operator
 cm_postgres_operator_version: "{{ lookup('env', 'CM_POSTGRES_OPERATOR_VERSION') | default('1.8.2', true) }}"
 
