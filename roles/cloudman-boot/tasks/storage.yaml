@@ -4,7 +4,7 @@
   ignore_errors: true
 
 - name: Helm repo add nfs-ganesha-provisioner
-  command: /usr/local/bin/helm repo add nfs-ganesha https://raw.githubusercontent.com/kubernetes-sigs/nfs-ganesha-server-and-external-provisioner/gh-pages
+  command: /usr/local/bin/helm repo add nfs-ganesha https://kubernetes-sigs.github.io/nfs-ganesha-server-and-external-provisioner/
   ignore_errors: true
 
 - name: Helm install nfs-provisioner
