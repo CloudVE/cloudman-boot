@@ -20,6 +20,8 @@ cm_cvmfs_csi_version: "{{ lookup('env', 'CM_CVMFS_CSI_VERSION') | default('2.0.0
 cm_cvmfs_csi_extra_params: "{{ lookup('env', 'CM_CVMFS_CSI_EXTRA_PARAMS') | default('', true) }}"
 # Postgres operator
 cm_postgres_operator_version: "{{ lookup('env', 'CM_POSTGRES_OPERATOR_VERSION') | default('1.9.0', true) }}"
+# NFS Provisioner
+cm_nfs_provisioner_version: "{{ lookup('env', 'CM_NFS_PROVISIONER_VERSION') | default('1.5.0', true) }}"
 
 # cluster settings
 cluster_hostname: "{{ lookup('env', 'CLUSTER_HOSTNAME') | default(inventory_hostname, true) }}"
