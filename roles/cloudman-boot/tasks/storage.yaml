@@ -11,6 +11,7 @@
   command: >
     /usr/local/bin/helm upgrade --install nfs-provisioner nfs-ganesha/nfs-server-provisioner
     --namespace csi-drivers
+    --version "{{ cm_nfs_provisioner_version }}"
     --set persistence.enabled=true
     --set persistence.storageClass="ebs"
     --set persistence.size="{{ cm_initial_storage_size | default('100Gi', true) }}"
