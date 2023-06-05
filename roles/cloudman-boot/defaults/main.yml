@@ -15,7 +15,7 @@ cm_validate_certs: "{{ lookup('env', 'CM_VALIDATE_CERTS') | default('no', true) 
 cm_volume_reclaim_policy: "Retain"
 
 # CVMFS-CSI version
-cm_cvmfs_csi_version: "{{ lookup('env', 'CM_CVMFS_CSI_VERSION') | default('2.0.0', true) }}"
+cm_cvmfs_csi_version: "{{ lookup('env', 'CM_CVMFS_CSI_VERSION') | default('2.2.0', true) }}"
 # CVMFS-CSI extra params to helm install command
 cm_cvmfs_csi_extra_params: "{{ lookup('env', 'CM_CVMFS_CSI_EXTRA_PARAMS') | default('', true) }}"
 # Postgres operator

@@ -76,6 +76,7 @@
     --version {{ cm_cvmfs_csi_version }}
     {{ cm_cvmfs_csi_extra_params }}
     --namespace csi-drivers
+    --set cvmfscsi.cache.alien.pvc.name="cvmfs-alien-cache"
   ignore_errors: true
   async: 30
   poll: 0
