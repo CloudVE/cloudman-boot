@@ -37,7 +37,7 @@
 
 - name: Create cloud config in /etc/kubernetes
   copy:
-    content: "{{ kube_cloud_conf }}"
+    content: "{{ kube_cloud_conf | default('') }}"
     dest: /etc/kubernetes/cloud-config
   become: yes
   when: kube_cloud_provider | default(false)
