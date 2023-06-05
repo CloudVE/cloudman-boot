@@ -18,6 +18,8 @@
     --set storageClass.create=true
     --set storageClass.reclaimPolicy="{{ cm_volume_reclaim_policy | default('Retain', true) }}"
     --set storageClass.allowVolumeExpansion=true
+  async: 30
+  poll: 0
 
 - name: Helm install RClone for AWS S3
   command: >
@@ -32,6 +34,8 @@
     --set params.s3-secret-access-key="{{ cm_initial_cluster_data.cloud_config.credentials.aws_secret_key }}"
   when: kube_cloud_provider == "aws"
   ignore_errors: true
+  async: 30
+  poll: 0
 
 - name: Helm install RClone for GCP
   command: >
@@ -42,6 +46,8 @@
     --set params.remotePath="{{ cluster_hostname | replace('.', '-') }}-gvl-data"
   when: kube_cloud_provider == "gce"
   ignore_errors: true
+  async: 30
+  poll: 0
 
 #    --set params.swift-application-credential-id="{{ cm_initial_cluster_data.cloud_config.credentials.os_application_credential_id }}"
 #    --set params.swift-application-credential-secret="{{ cm_initial_cluster_data.cloud_config.credentials.os_application_credential_secret }}"
@@ -61,6 +67,8 @@
     --set params.swift-tenant-domain="{{ cm_initial_cluster_data.cloud_config.credentials.os_project_domain_name }}"
   when: kube_cloud_provider == "openstack"
   ignore_errors: true
+  async: 30
+  poll: 0
 
 - name: Helm install galaxy-cvmfs-csi
   command: >
@@ -69,3 +77,5 @@
     {{ cm_cvmfs_csi_extra_params }}
     --namespace csi-drivers
   ignore_errors: true
+  async: 30
+  poll: 0

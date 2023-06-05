@@ -29,6 +29,8 @@
     {% endif %}
     -f "{{ temp_helmvals.path }}"
   ignore_errors: true
+  async: 30
+  poll: 0
 
 - name: Remove temporary values file
   file:

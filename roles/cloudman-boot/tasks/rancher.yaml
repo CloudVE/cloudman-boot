@@ -21,3 +21,5 @@
     --set letsEncrypt.ingress.class=nginx
     --set bootstrapPassword="{{ cluster_password }}"
   ignore_errors: true
+  async: 30
+  poll: 0

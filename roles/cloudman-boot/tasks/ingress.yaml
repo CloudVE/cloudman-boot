@@ -23,6 +23,8 @@
     --set controller.watchIngressWithoutClass=true
     --set controller.config.use-forwarded-headers=true
   ignore_errors: true
+  async: 30
+  poll: 0
 
 - name: Fix for issue https://github.com/kubernetes/ingress-nginx/issues/5401
   command: >
