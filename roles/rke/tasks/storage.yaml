@@ -41,13 +41,14 @@
 - name: Add OpenStack CSI Driver repo
   command: >
     /usr/local/bin/helm repo add cpo https://kubernetes.github.io/cloud-provider-openstack
-  when: kube_in_tree_provider and kube_cloud_provider == "openstack"
+  when: not kube_in_tree_provider and kube_cloud_provider == "openstack"
 
 - name: Install OpenStack CSI Driver
   command: >
     /usr/local/bin/helm upgrade --install cinder-csi cpo/openstack-cinder-csi
         --namespace csi-drivers
-  when: kube_in_tree_provider and kube_cloud_provider == "openstack"
+        --set secret.filename=cloud-config
+  when: not kube_in_tree_provider and kube_cloud_provider == "openstack"
   async: 30
   poll: 0
 
